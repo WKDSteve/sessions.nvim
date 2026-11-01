@@ -72,6 +72,12 @@ end
 
 ---@return string|nil
 function M.current_branch()
+  -- The file read first: `lib.nvim.git` starts a `git` process (~150 ms on Windows, on every save and name
+  -- resolution). lib.nvim answers only what the file cannot (a detached HEAD, no repository found).
+  local direct = read_branch_from_head(vim.fn.getcwd())
+  if direct then
+    return direct
+  end
   local ok, git = pcall(require, "lib.nvim.git")
   if ok then
     local branch = git.current_branch()

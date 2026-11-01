@@ -20,6 +20,13 @@ return function(H)
   end
 
   -- ---------------------------------------------- current_branch, via lib.nvim
+  -- lib.nvim is asked only when the direct .git/HEAD read names no branch (a detached HEAD, no repository): a
+  -- named branch is answered without spawning `git`, which cost ~150 ms per session save.
+
+  local detached = dir .. "/detached"
+  vim.fn.mkdir(detached .. "/.git", "p")
+  vim.fn.writefile({ "9f6c4b1d0e2a3b5c7d8e9f0a1b2c3d4e5f607182" }, detached .. "/.git/HEAD")
+  cd(detached)
 
   local restore = H.stub("lib.nvim.git", {
     current_branch = function()
@@ -50,6 +57,7 @@ return function(H)
   })
   H.falsy(git.current_branch(), "and so is no answer at all")
   undo_nil()
+  cd(start_cwd)
 
   -- ------------------------------------------- current_branch, the fallback
 
@@ -118,7 +126,7 @@ return function(H)
 
   -- lib.nvim.git IS installed here (no `no_lib()` stub active) and would
   -- answer something completely different -- current_branch() itself
-  -- would prefer it (confirmed first, for contrast); current_branch_no_spawn()
+  -- would be a spawn (current_branch() reads .git/HEAD first now); current_branch_no_spawn()
   -- must ignore it regardless and read .git/HEAD directly instead.
   local lib_says_something_else = H.stub("lib.nvim.git", {
     current_branch = function()
@@ -127,8 +135,8 @@ return function(H)
   })
   H.eq(
     git.current_branch(),
-    "SPAWNED-VIA-LIB-NVIM-GIT",
-    "current_branch() itself does prefer lib.nvim.git when installed"
+    "no-spawn-branch",
+    "current_branch() answers from .git/HEAD too: lib.nvim.git is only the fallback"
   )
   H.eq(
     git.current_branch_no_spawn(),
@@ -175,6 +183,8 @@ return function(H)
   -- resolve_name_spec.lua asserts the *shape* against whatever checkout it runs
   -- in. With both sources stubbed the composition can be pinned literally.
 
+  -- (in the detached-HEAD fixture: a named branch in .git/HEAD would be answered without lib.nvim)
+  cd(detached)
   local fake_branch = H.stub("lib.nvim.git", {
     current_branch = function()
       return "feature/login"
@@ -223,6 +233,7 @@ return function(H)
   blank_branch()
   root_root()
   fake_branch()
+  cd(start_cwd)
 
   -- ----------------------------------------------------------- branch_exists
   -- Purely filesystem-based -- real, hand-written .git directories, same
