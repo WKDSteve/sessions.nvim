@@ -239,7 +239,8 @@ end
 
 ---@type table<string, { row: integer, col: integer }>
 local pending_context = {}
-local context_timer = nil
+---@type Lib.Debounce.Handle|nil
+local context_debounce = nil
 
 ---@internal
 ---Write every remembered cursor position at once -- one store read and at
@@ -248,10 +249,8 @@ local context_timer = nil
 ---buffers used to cost one store rewrite per file instead of the single
 ---write this module's own doc comment promises.
 local function flush_context()
-  if context_timer then
-    context_timer:stop()
-    context_timer:close()
-    context_timer = nil
+  if context_debounce then
+    context_debounce.cancel()
   end
   local marks = require("sessions.marks")
   pcall(marks.update_contexts, pending_context)
@@ -268,6 +267,11 @@ function M.enable_marks(cfg, aug)
   if type(ms) ~= "number" or ms < 0 then
     ms = 200
   end
+
+  if context_debounce then
+    context_debounce.cancel()
+  end
+  context_debounce = require("lib.nvim.debounce").new(flush_context, ms)
 
   create_autocmd("BufLeave", function(ev)
     if vim.bo[ev.buf].buftype ~= "" then
@@ -286,14 +290,7 @@ function M.enable_marks(cfg, aug)
       flush_context()
       return
     end
-    local uv = vim.uv or vim.loop
-    if not context_timer then
-      context_timer = uv.new_timer()
-    end
-    context_timer:stop()
-    context_timer:start(ms, 0, function()
-      vim.schedule(flush_context)
-    end)
+    context_debounce.call()
   end, {
     group = aug,
     desc = "sessions.nvim: remember the cursor position of a marked file",
