@@ -659,6 +659,7 @@ return function(H)
     -- keeps its own defaults; `false` and a table go through; a wrong type is a
     -- config typo and degrades to the defaults instead of reaching the kit.
     H.eq(kopts.preview_keys, nil, "no preview_keys configured -> the kit's defaults")
+    H.eq(kopts.number_keys, true, "kit menu asks for harpoon-style 1-9 keys")
     local function passed_keys(value)
       config.setup({
         root = dir .. "/sroot_kit",

@@ -459,6 +459,8 @@ local function open_kit()
       open_with("edit", item.path, pos)
     end,
     preview_keys = preview_keys,
+    -- harpoon-style 1-9 select the n-th mark, like `:Cases marks`
+    number_keys = true,
   })
   if not h then
     return false

@@ -110,6 +110,7 @@ you can look further into a file before you open it — and copy from it.
 | list, preview | `<C-f>`, `<PageDown>` | scroll the preview one page down |
 | list, preview | `<C-p>`, `<C-b>`, `<PageUp>` | one page up |
 | list, preview | `<C-d>` / `<C-u>` | half a page down / up |
+| list | `1`…`9` | select the n-th mark (harpoon-style) |
 | list, preview | `<Tab>`, `<C-w>w`, `<C-w><C-w>`, `<C-w>W` | hop between list and preview |
 | preview | `<C-w>j` | down to the list (a no-op in the list — nothing below it) |
 | list | `<C-w>k` | up to the preview (a no-op in the preview — nothing above it) |
