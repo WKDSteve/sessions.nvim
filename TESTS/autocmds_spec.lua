@@ -215,9 +215,16 @@ return function(H)
       setup({ autosave = true })
       -- Like the real chip: every refresh puts a float on screen, even while the old one is closing.
       local redrawn = 0
+      -- Refreshes asked for while the load runs, and once it is over.
+      local mid, after = 0, 0
       local floats = {}
       local drawing = false
       local function draw()
+        if core.loading() then
+          mid = mid + 1
+        else
+          after = after + 1
+        end
         -- (a budget: without the guard under test, :only would chase new floats for ever)
         if drawing or redrawn >= 3 then
           return
@@ -246,16 +253,21 @@ return function(H)
       vim.cmd.edit(vim.fn.fnameescape(file))
       H.ok(core.save("chip_load"), "a session to load")
       draw()
-      redrawn = 0
+      redrawn, after = 0, 0
       vim.v.errmsg = ""
       H.ok(core.load("chip_load"), "it loads")
       H.eq(vim.v.errmsg, "", "no E445 left behind")
-      H.eq(redrawn, 0, "the chip is not drawn again in the middle of the load")
+      H.eq(mid, 0, "the chip is not drawn again in the middle of the load")
       H.falsy(core.loading(), "and the load is over")
+      -- `only` closed it: the load draws it again itself, the pickers and require("sessions").load()
+      -- call core.load() and refresh nothing of their own.
+      H.ok(after >= 1, "the chip is drawn again once the load is over")
       H.ok(core.save_tab("chip_tab"), "a tab session")
-      vim.v.errmsg = ""
+      vim.v.errmsg, after = "", 0
       H.ok(core.load_tab("chip_tab"), "a tab load")
       H.eq(vim.v.errmsg, "", "the same for a tab load")
+      H.eq(mid, 0, "a tab load does not draw it in the middle either")
+      H.ok(after >= 1, "and draws it again once it is over")
       vim.cmd("silent! tabonly!")
       for _, win in ipairs(floats) do
         if vim.api.nvim_win_is_valid(win) then

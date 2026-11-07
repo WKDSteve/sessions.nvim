@@ -792,6 +792,9 @@ function M.load(name)
   if cfg.hooks.on_load then
     pcall(cfg.hooks.on_load, si.name, si.path)
   end
+  -- The chip went with `only` and was not drawn mid-load (see M.loading()):
+  -- drawn here, once, for every caller (the pickers, require("sessions").load()).
+  require("sessions.chip").refresh()
   announce("SessionsLoadPost", si.name, si.path, false)
 
   return true, si.path, hidden, stale
@@ -852,6 +855,7 @@ function M.load_tab(name)
   if cfg.hooks.on_load then
     pcall(cfg.hooks.on_load, name, path)
   end
+  require("sessions.chip").refresh() -- not drawn mid-load, see M.load()
   announce("SessionsLoadPost", name, path, true)
 
   return true, path, stale
