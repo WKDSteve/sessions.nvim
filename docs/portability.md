@@ -48,6 +48,12 @@ when `relative_paths` isn't enabled (or doesn't cover a path outside
 Same boundary rule as `relative_paths` above: a path merely starting with
 `old-root`'s text but not actually inside it is left alone.
 
+A key below the home directory of another machine only matches when it is
+written with `~` (`["~/work"] = "D:/work"`, not `["C:/Users/alice/work"]`):
+`:mksession` stores a path below the saving machine's home as `~/...`, and
+only the loading machine's own home is known here to translate between the
+two spellings.
+
 Rewriting happens on an in-memory temp copy sourced instead of the
 original file — the stored session stays untouched, so it keeps working
 for every machine in your `root_remap` set, not just the last one that
