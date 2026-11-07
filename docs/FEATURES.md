@@ -306,7 +306,7 @@ resolving by project/branch. Loading `last` (what `:LastSession` does) in a
 project/branch-aware setup does not turn it into the workspace either: a bare
 `:Session save` and the autosave on exit still go to the project's own
 session. `last` is also never offered by `:Session stale` / `delete-stale`. It is skipped when no real file buffer is open
-(an empty `nvim` or a lone commit message must not erase the last real
+(an empty `nvim`, a bare directory listing (`nvim .`) or a lone commit message must not erase the last real
 session), and so is an autosave that would land on `last` (outside any project
 the auto-resolved name is `default_name`). For the same reason an empty exit
 never overwrites an existing session through the autosave: an empty `nvim` in a

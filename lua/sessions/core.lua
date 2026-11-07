@@ -426,18 +426,18 @@ end
 ---@internal
 ---Whether at least one listed, named, regular buffer is open -- something a
 ---session would actually bring back. Judged after the blacklist/stale sweep.
+---A directory buffer (`nvim .` with netrw off, or before a file explorer
+---replaces it) does not count: on its own it is the empty start in a project.
 ---@return boolean
 local function has_restorable_buffer()
   local bufs = api.nvim_list_bufs()
   for i = 1, #bufs do
     local b = bufs[i]
-    if
-      api.nvim_buf_is_valid(b)
-      and bo[b].buflisted
-      and bo[b].buftype == ""
-      and api.nvim_buf_get_name(b) ~= ""
-    then
-      return true
+    if api.nvim_buf_is_valid(b) and bo[b].buflisted and bo[b].buftype == "" then
+      local name = api.nvim_buf_get_name(b)
+      if name ~= "" and fn.isdirectory(name) == 0 then
+        return true
+      end
     end
   end
   return false

@@ -291,6 +291,15 @@ return function(H)
         "the project's real session",
         "an empty exit leaves an existing project session alone"
       )
+      -- `nvim .`: a directory listing alone is no file a session brings back either.
+      vim.cmd("silent! edit " .. vim.fn.fnameescape(vim.fn.fnamemodify(file, ":h")))
+      vim.api.nvim_exec_autocmds("VimLeavePre", {})
+      H.eq(
+        vim.fn.readfile(project_file)[1],
+        "the project's real session",
+        "a directory buffer alone is an empty exit too"
+      )
+      vim.cmd("silent! %bwipeout!")
       vim.cmd.edit(vim.fn.fnameescape(file))
       vim.api.nvim_exec_autocmds("VimLeavePre", {})
       H.ok(
