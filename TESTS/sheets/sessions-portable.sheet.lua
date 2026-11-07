@@ -62,23 +62,12 @@ return {
     },
     { keys = ":Session save remap-test<CR>", note = "saved before any remap exists" },
     {
-      lua = [[-- as saved on another machine: :mksession writes a path below $HOME with a ~, which no
-      -- key of root_remap matches, so the session is spelled with a path of no home directory
-      local file = _G.STORE .. "/remap-test.vim"
-      local lines = vim.fn.readfile(file)
-      local found = false
-      for i, line in ipairs(lines) do
-        if line:sub(1, 3) == "cd " then
-          lines[i], found = "cd X:/old/path", true
-        end
-      end
-      assert(found, "no cd line in the session")
-      vim.fn.writefile(lines, file)
+      lua = [[-- the plain path as the key, whichever way :mksession spelled it (~ below $HOME)
       vim.cmd("silent! %bwipeout!")
       _G.setup({
         chip = { enable = false },
         autosave = false,
-        root_remap = { ["X:/old/path"] = _G.copy },
+        root_remap = { [_G.dir] = _G.copy },
       })]],
     },
     { keys = ":Session load remap-test<CR>" },

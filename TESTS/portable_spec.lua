@@ -18,6 +18,44 @@ return function(H)
     vim.fn.writefile(lines, session)
   end
 
+  -- root_remap below $HOME --------------------------------------------------------
+  -- :mksession writes a path below the home directory as `~/...`, the user writes the key as they
+  -- know the path. A real :mksession, not a hand-written file: the spelling is the point.
+  do
+    local real_home = vim.env.HOME
+    local home = dir .. "/home"
+    local old_project = home .. "/old"
+    vim.fn.mkdir(old_project, "p")
+    vim.env.HOME = home
+    local real_cwd = vim.fn.getcwd()
+    vim.cmd.cd(vim.fn.fnameescape(old_project))
+    local from_home = dir .. "/from-home.vim"
+    vim.cmd.mksession({ args = { from_home }, bang = true })
+    vim.cmd.cd(vim.fn.fnameescape(real_cwd))
+    H.contains(
+      H.read(from_home),
+      "cd ~/old",
+      "the premise: :mksession abbreviates the home directory"
+    )
+
+    local path, is_temp =
+      portable.prepare_for_load(from_home, project, { [old_project] = "/new/place" })
+    H.ok(is_temp, "a key that is the absolute path below $HOME matches the ~ spelling")
+    H.contains(H.read(path), "cd /new/place", "and is translated")
+    if is_temp then
+      os.remove(path)
+    end
+
+    path, is_temp = portable.prepare_for_load(from_home, project, { ["~/old"] = "/new/place" })
+    H.ok(is_temp, "a key spelled with ~ works as well")
+    H.contains(H.read(path), "cd /new/place", "and is translated")
+    if is_temp then
+      os.remove(path)
+    end
+
+    vim.env.HOME = real_home
+  end
+
   -- make_relative -------------------------------------------------------------
   write_session({
     "cd " .. project,

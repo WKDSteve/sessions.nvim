@@ -24,6 +24,35 @@ local function roots(cwd)
   return { { path = cwd, placeholder = PLACEHOLDER } }
 end
 
+---`root_remap` with each key also in the other spelling of the home directory:
+---:mksession writes a path below it as `~/...`, the user writes the key as they
+---know the path (and may write `~/...` for a file edited by hand).
+---@param remap table<string, string>|nil
+---@return table<string, string>|nil
+local function with_home_spellings(remap)
+  if not remap or not next(remap) then
+    return remap
+  end
+  local home = vim.fs.normalize(vim.fn.expand("~")):gsub("/+$", "")
+  local fold = vim.fn.has("win32") == 1 and string.lower or function(s)
+    return s
+  end
+  local out = {}
+  for old_root, new_root in pairs(remap) do
+    out[old_root] = new_root
+    if type(old_root) == "string" then
+      local key = old_root:gsub("\\", "/"):gsub("/+$", "")
+      local head = fold(key:sub(1, #home))
+      if head == fold(home) and (#key == #home or key:sub(#home + 1, #home + 1) == "/") then
+        out["~" .. key:sub(#home + 1)] = new_root
+      elseif key:sub(1, 2) == "~/" then
+        out[home .. key:sub(2)] = new_root
+      end
+    end
+  end
+  return out
+end
+
 ---Replace every occurrence of `cwd` (in the spellings :mksession may use)
 ---in the saved session file with a portable placeholder, so the file no
 ---longer pins itself to the machine it was saved on.
@@ -58,7 +87,10 @@ function M.prepare_for_load(session_path, cwd, root_remap)
   if cwd == "" then
     return session_path, false, "empty cwd"
   end
-  return portable.resolve_file(session_path, roots(cwd), { remap = root_remap, suffix = ".vim" })
+  return portable.resolve_file(session_path, roots(cwd), {
+    remap = with_home_spellings(root_remap),
+    suffix = ".vim",
+  })
 end
 
 return M

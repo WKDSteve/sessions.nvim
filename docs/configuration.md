@@ -31,6 +31,7 @@ require("sessions").setup({
 
   -- Old-root -> new-root path prefixes translated when loading, for
   -- cross-OS/cross-machine sync. See docs/portability.md.
+  -- A key below the home directory also matches the `~/...` spelling :mksession writes.
   root_remap = {},
 
   -- Auto-load the contextual session when Neovim starts without file args.
