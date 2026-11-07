@@ -70,6 +70,14 @@ jobs:
           path: lib.nvim
           ref: ci-verified
 
+      # ui.nvim: the corner chip, the dialogs and the kit marks menu (`ui.kit`) are what the test sheets press, for real.
+      - name: Checkout ui.nvim
+        uses: actions/checkout@v5
+        with:
+          repository: WKDSteve/ui.nvim
+          path: ui.nvim
+          ref: ci-verified
+
       - uses: rhysd/action-setup-vim@v1
         with:
           neovim: true

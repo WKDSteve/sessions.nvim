@@ -14,7 +14,13 @@
 local this = vim.fn.fnamemodify(debug.getinfo(1, "S").source:sub(2), ":p")
 local root = vim.fs.dirname(vim.fs.dirname(vim.fs.normalize(this)))
 
-local DEPS = { "testing.nvim", "lib.nvim" }
+local DEPS = { "testing.nvim", "lib.nvim", "ui.nvim" }
+
+-- Found like the others (`ci commit` hands it over as $UI_NVIM_DIR because it is named above), but left off the
+-- runtimepath: the specs stand up their own `ui.kit` doubles and expect none otherwise. The test sheets press the real
+-- chip and dialogs and add it themselves (TESTS/sheets/_helpers.lua, vim.g.sessions_sheets_ui_nvim).
+---@type table<string, true>
+local SHEETS_ONLY = { ["ui.nvim"] = true }
 
 ---@type table<string, string>
 local MARKERS = { ["lib.nvim"] = "lua/lib/nvim", ["testing.nvim"] = "lua/testing" }
@@ -80,7 +86,10 @@ end
 
 vim.opt.rtp:prepend(root)
 for _, name in ipairs(DEPS) do
-  vim.opt.rtp:append(found[name])
+  if not SHEETS_ONLY[name] then
+    vim.opt.rtp:append(found[name])
+  end
 end
+vim.g.sessions_sheets_ui_nvim = found["ui.nvim"]
 
 return { root = root, deps = found }
