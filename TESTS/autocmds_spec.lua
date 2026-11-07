@@ -209,6 +209,65 @@ return function(H)
       core.forget_current_on_dir_change()
     end
 
+    -- A load with the chip visible: `only` closes it, the structural autocmds must not draw it again
+    -- in the middle (:only would end with a second window, E445 in v:errmsg). A float stands in for it.
+    do
+      setup({ autosave = true })
+      -- Like the real chip: every refresh puts a float on screen, even while the old one is closing.
+      local redrawn = 0
+      local floats = {}
+      local drawing = false
+      local function draw()
+        -- (a budget: without the guard under test, :only would chase new floats for ever)
+        if drawing or redrawn >= 3 then
+          return
+        end
+        drawing = true
+        floats[#floats + 1] = vim.api.nvim_open_win(vim.api.nvim_create_buf(false, true), false, {
+          relative = "editor",
+          row = 0,
+          col = 0,
+          width = 4,
+          height = 1,
+          focusable = false,
+        })
+        drawing = false
+        redrawn = redrawn + 1
+      end
+      local chip_stub = H.stub("sessions.chip", {
+        ensure_mounted = function() end,
+        refresh = draw,
+        pulse = function() end,
+        is_active = function()
+          return true
+        end,
+      })
+      load_module().enable()
+      vim.cmd.edit(vim.fn.fnameescape(file))
+      H.ok(core.save("chip_load"), "a session to load")
+      draw()
+      redrawn = 0
+      vim.v.errmsg = ""
+      H.ok(core.load("chip_load"), "it loads")
+      H.eq(vim.v.errmsg, "", "no E445 left behind")
+      H.eq(redrawn, 0, "the chip is not drawn again in the middle of the load")
+      H.falsy(core.loading(), "and the load is over")
+      H.ok(core.save_tab("chip_tab"), "a tab session")
+      vim.v.errmsg = ""
+      H.ok(core.load_tab("chip_tab"), "a tab load")
+      H.eq(vim.v.errmsg, "", "the same for a tab load")
+      vim.cmd("silent! tabonly!")
+      for _, win in ipairs(floats) do
+        if vim.api.nvim_win_is_valid(win) then
+          vim.api.nvim_win_close(win, true)
+        end
+      end
+      core.delete("chip_load")
+      vim.fn.delete(root() .. "/.tabs", "rf")
+      core.forget_current_on_dir_change()
+      chip_stub()
+    end
+
     -- In a project too: an empty editor must not replace the project's session with an empty one.
     do
       local stub = H.stub("sessions.git", {

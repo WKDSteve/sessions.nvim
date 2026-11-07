@@ -18,6 +18,9 @@ local _current = nil
 ---@type boolean
 local _dirty = false
 
+---@type boolean
+local _loading = false
+
 ---@return string|nil
 function M.current()
   return _current
@@ -28,6 +31,15 @@ end
 ---@return boolean
 function M.dirty()
   return _dirty
+end
+
+---True while a session is being sourced. Its windows are closed and opened in
+---bulk then; the chip must not be drawn again in the middle of that: a float
+---that reappears while `:only` closes the others ends that `:only` with E445
+---in `v:errmsg`. The callers refresh it once the load is done.
+---@return boolean
+function M.loading()
+  return _loading
 end
 
 ---Mark the active session dirty. Called by structural autocmds
@@ -728,23 +740,30 @@ function M.load(name)
 
   -- Collapse windows before sourcing to avoid E445 from the session's `only`/`tabonly`.
   local hidden = modified_buffer_names()
-  pcall(function()
-    vim.cmd("silent! only!")
-  end)
-  pcall(function()
-    vim.cmd("silent! tabonly!")
-  end)
+  _loading = true
+  local ok, err = pcall(function()
+    pcall(function()
+      vim.cmd("silent! only!")
+    end)
+    pcall(function()
+      vim.cmd("silent! tabonly!")
+    end)
 
-  local source_path, is_temp = si.path, false
-  if cfg.relative_paths or next(cfg.root_remap) then
-    source_path, is_temp =
-      require("sessions.portable").prepare_for_load(si.path, fn.getcwd(), cfg.root_remap)
-  end
+    local source_path, is_temp = si.path, false
+    if cfg.relative_paths or next(cfg.root_remap) then
+      source_path, is_temp =
+        require("sessions.portable").prepare_for_load(si.path, fn.getcwd(), cfg.root_remap)
+    end
 
-  local ok, err = pcall(vim.cmd.source, source_path)
-  if is_temp then
-    os.remove(source_path)
-  end
+    local sourced, source_err = pcall(vim.cmd.source, source_path)
+    if is_temp then
+      os.remove(source_path)
+    end
+    if not sourced then
+      error(source_err, 0)
+    end
+  end)
+  _loading = false
   if not ok then
     return false, err
   end
@@ -799,18 +818,25 @@ function M.load_tab(name)
   end
 
   apply_sessionoptions()
-  vim.cmd("tabnew")
+  _loading = true
+  local ok, err = pcall(function()
+    vim.cmd("tabnew")
 
-  local source_path, is_temp = path, false
-  if cfg.relative_paths or next(cfg.root_remap) then
-    source_path, is_temp =
-      require("sessions.portable").prepare_for_load(path, fn.getcwd(), cfg.root_remap)
-  end
+    local source_path, is_temp = path, false
+    if cfg.relative_paths or next(cfg.root_remap) then
+      source_path, is_temp =
+        require("sessions.portable").prepare_for_load(path, fn.getcwd(), cfg.root_remap)
+    end
 
-  local ok, err = pcall(vim.cmd.source, source_path)
-  if is_temp then
-    os.remove(source_path)
-  end
+    local sourced, source_err = pcall(vim.cmd.source, source_path)
+    if is_temp then
+      os.remove(source_path)
+    end
+    if not sourced then
+      error(source_err, 0)
+    end
+  end)
+  _loading = false
   if not ok then
     pcall(function()
       vim.cmd("tabclose")

@@ -422,6 +422,7 @@ function M.enable()
           local ok, res, stale = require("sessions.core").load_tab(ctx.args.name)
           if ok then
             n().info("tab session loaded: " .. (res or "?"))
+            require("sessions.chip").refresh()
             if stale and #stale > 0 then
               n().warn("dropped (file no longer exists): " .. table.concat(stale, ", "))
             end

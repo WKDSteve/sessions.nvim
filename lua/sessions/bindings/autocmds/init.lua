@@ -211,8 +211,12 @@ function M.enable()
       "TabClosed",
     }) do
       create_autocmd(event, function()
-        require("sessions.core").mark_dirty()
-        require("sessions.chip").refresh()
+        local core = require("sessions.core")
+        core.mark_dirty()
+        -- Not mid-load: see core.loading(). The load's caller refreshes afterwards.
+        if not core.loading() then
+          require("sessions.chip").refresh()
+        end
       end, {
         group = aug,
         desc = "sessions.nvim: mark session dirty for statusline",

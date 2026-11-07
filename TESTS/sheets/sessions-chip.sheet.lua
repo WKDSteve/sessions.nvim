@@ -64,13 +64,7 @@ return {
     },
     { keys = ":Session save with-gone<CR>" },
     { lua = [[vim.cmd.edit("a.txt"); os.remove("gone.txt")]] },
-    {
-      keys = ":Session load with-gone<CR>",
-      -- The chip is visible here: while the session's own `silent only` closes it, a structural
-      -- autocmd draws it again, so :only ends with a second window and leaves E445 in v:errmsg.
-      -- Nothing is shown and the load goes on.
-      ignore_errmsg = true,
-    },
+    { keys = ":Session load with-gone<CR>", note = "the chip is visible: no E445 in v:errmsg" },
     { wait = [[_G.noted("dropped (file no longer exists): ") and _G.noted("gone.txt")]] },
     { expect = [[_G.chip() ~= nil]], note = "alongside the chip" },
 
@@ -79,7 +73,7 @@ return {
       vim.api.nvim_buf_set_lines(0, 0, -1, false, { "unsaved" })
       _G.forget()]],
     },
-    { keys = ":Session load chip-test<CR>", ignore_errmsg = true },
+    { keys = ":Session load chip-test<CR>" },
     {
       expect = [[_G.noted("hidden (unsaved): ") and not _G.noted("loaded: ")]],
       note = "the hidden note stays with the chip, only the loaded line is replaced",
