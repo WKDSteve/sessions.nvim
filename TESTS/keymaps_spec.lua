@@ -120,6 +120,21 @@ return function(H)
   keymaps.attach({ save = "gZs", load = "<F12>" }, true)
   H.eq(#added, 0, "unrelated keys get no group label")
 
+  -- Bytes are not keys: "<" is no prefix, nor is half a key, nor the bare leader.
+  added = {}
+  keymaps.attach({ save = "<F11>a", load = "<leader>zzz" }, true)
+  H.eq(#added, 0, "a shared '<' is not a shared key")
+  added = {}
+  keymaps.attach({ save = "<F12>" }, true)
+  H.eq(#added, 0, "half of a single key is no prefix")
+  added = {}
+  keymaps.attach({ save = "<leader>a", load = "<leader>zzz" }, true)
+  H.eq(#added, 0, "the bare leader is everybody's prefix, not the plugin's")
+  added = {}
+  keymaps.attach({ save = "<F11>a", load = "<F11>b" }, true)
+  H.eq(#added, 1, "a whole shared key still counts")
+  H.eq(added[1].prefix, "<F11>", "as that key")
+
   -- which_key = false skips the label even when there is a common prefix.
   added = {}
   keymaps.attach({ save = "gYs", load = "gYl" }, false)

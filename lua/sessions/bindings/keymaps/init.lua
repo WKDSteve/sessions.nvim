@@ -109,7 +109,16 @@ local function common_prefix(bound)
       prefix = prefix:sub(1, -2)
     end
   end
-  return prefix ~= "" and prefix or nil
+  -- Bytes are not keys: `<F9>x` and `<leader>a` share "<", and a single
+  -- `<F9>` loses its last byte above. Only whole keys count. And the bare
+  -- leader is everybody's prefix: labelling it would rename the whole leader
+  -- menu "Session" for keys that have nothing else in common.
+  prefix = prefix:gsub("<[^>]*$", "")
+  local bare = prefix:lower()
+  if prefix == "" or bare == "<leader>" or bare == "<localleader>" then
+    return nil
+  end
+  return prefix
 end
 
 ---Declare the keymap actions and bind whichever ones the user configured.
