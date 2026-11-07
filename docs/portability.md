@@ -36,8 +36,8 @@ synced/committed); loading never mutates it.
 ```lua
 require("sessions").setup({
   root_remap = {
-    ["/home/user"] = "/Users/user",   -- Linux session, loaded on macOS
-    ["C:/Users/alice"] = "/home/alice", -- Windows session, loaded on Linux/WSL
+    ["/srv/projects"] = "D:/projects", -- Linux session, loaded on Windows
+    ["~/work"] = "D:/work",            -- below a home directory: written with ~
   },
 })
 ```
