@@ -73,8 +73,11 @@ function H.fixture(name)
   local dir = HERE .. "/.fixture-" .. name
   vim.fn.delete(dir, "rf")
   vim.fn.mkdir(dir, "p")
-  return dir, function()
-    vim.fn.delete(dir, "rf")
+  -- Resolved: the marks store keeps real paths, so a checkout reached through a link (a packaged
+  -- app's redirected AppData, a symlinked repository) would otherwise compare unequal to itself.
+  local real = vim.fs.normalize(vim.uv.fs_realpath(dir) or dir)
+  return real, function()
+    vim.fn.delete(real, "rf")
   end
 end
 
