@@ -2,7 +2,7 @@
 return {
   id = "sessions.marks-edit",
   title = "sessions.nvim: pin, unpin, defaults sync/reset, the edit menu and its question on a pinned line",
-  task = "sessions.nvim/testblatt-bindings-checkliste",
+  task = "sessions.nvim/manual-checklist-run",
   steps = {
     {
       lua = [[dofile(vim.fn.getcwd() .. "/TESTS/sheets/_helpers.lua")

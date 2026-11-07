@@ -2,7 +2,7 @@
 return {
   id = "sessions.dirty-meta",
   title = "sessions.nvim: the dirty marker follows structure, not text; the metadata companion file",
-  task = "sessions.nvim/testblatt-bindings-checkliste",
+  task = "sessions.nvim/manual-checklist-run",
   steps = {
     {
       lua = [[dofile(vim.fn.getcwd() .. "/TESTS/sheets/_helpers.lua")

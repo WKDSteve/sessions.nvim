@@ -2,7 +2,7 @@
 return {
   id = "sessions.tabs",
   title = "sessions.nvim: tab sessions live apart, open in a new tab and leave the tracked session alone",
-  task = "sessions.nvim/testblatt-bindings-checkliste",
+  task = "sessions.nvim/manual-checklist-run",
   steps = {
     {
       lua = [[dofile(vim.fn.getcwd() .. "/TESTS/sheets/_helpers.lua")

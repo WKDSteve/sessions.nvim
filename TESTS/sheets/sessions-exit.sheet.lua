@@ -3,7 +3,7 @@
 return {
   id = "sessions.exit",
   title = "sessions.nvim: the exit writes the project's session and last.vim, :LastSession brings them back",
-  task = "sessions.nvim/testblatt-bindings-checkliste",
+  task = "sessions.nvim/manual-checklist-run",
   steps = {
     {
       lua = [[dofile(vim.fn.getcwd() .. "/TESTS/sheets/_helpers.lua")

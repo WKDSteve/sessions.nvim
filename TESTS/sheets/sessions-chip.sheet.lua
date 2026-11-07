@@ -2,7 +2,7 @@
 return {
   id = "sessions.chip",
   title = "sessions.nvim: the chip replaces the saved/loaded notify, hides itself and toggles",
-  task = "sessions.nvim/testblatt-bindings-checkliste",
+  task = "sessions.nvim/manual-checklist-run",
   steps = {
     {
       lua = [[dofile(vim.fn.getcwd() .. "/TESTS/sheets/_helpers.lua")

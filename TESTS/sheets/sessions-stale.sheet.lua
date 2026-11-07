@@ -2,7 +2,7 @@
 return {
   id = "sessions.stale",
   title = "sessions.nvim: stale means the branch is gone; one question for the batch; save-timestamp",
-  task = "sessions.nvim/testblatt-bindings-checkliste",
+  task = "sessions.nvim/manual-checklist-run",
   steps = {
     {
       lua = [[dofile(vim.fn.getcwd() .. "/TESTS/sheets/_helpers.lua")

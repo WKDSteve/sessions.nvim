@@ -3,7 +3,7 @@
 return {
   id = "sessions.marks-kit",
   title = "sessions.nvim: :Session marks opens the kit menu: preview, keys, close; a missing picker falls back",
-  task = "sessions.nvim/testblatt-bindings-checkliste",
+  task = "sessions.nvim/manual-checklist-run",
   sizes = { { rows = 40, cols = 120 } },
   steps = {
     {

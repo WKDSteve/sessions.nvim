@@ -2,7 +2,7 @@
 return {
   id = "sessions.toggle-track",
   title = "sessions.nvim: toggle-track needs a repo, flips skip-worktree and answers asynchronously",
-  task = "sessions.nvim/testblatt-bindings-checkliste",
+  task = "sessions.nvim/manual-checklist-run",
   steps = {
     {
       lua = [[dofile(vim.fn.getcwd() .. "/TESTS/sheets/_helpers.lua")

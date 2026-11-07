@@ -2,7 +2,7 @@
 return {
   id = "sessions.layout",
   title = "sessions.nvim: a layout snapshot brings the split structure and sizes back, not the files",
-  task = "sessions.nvim/testblatt-bindings-checkliste",
+  task = "sessions.nvim/manual-checklist-run",
   sizes = { { rows = 40, cols = 120 } },
   steps = {
     {

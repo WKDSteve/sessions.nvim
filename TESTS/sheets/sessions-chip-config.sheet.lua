@@ -3,7 +3,7 @@
 return {
   id = "sessions.chip-config",
   title = "sessions.nvim: anchor, shape, min_width, timeout_ms, track_mode and pulse of the chip",
-  task = "sessions.nvim/testblatt-bindings-checkliste",
+  task = "sessions.nvim/manual-checklist-run",
   steps = {
     {
       lua = [[dofile(vim.fn.getcwd() .. "/TESTS/sheets/_helpers.lua")

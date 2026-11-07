@@ -2,7 +2,7 @@
 return {
   id = "sessions.marks",
   title = "sessions.nvim: :Session marks add, list, remove, select, preview, debug, import-harpoon",
-  task = "sessions.nvim/testblatt-bindings-checkliste",
+  task = "sessions.nvim/manual-checklist-run",
   steps = {
     {
       lua = [[dofile(vim.fn.getcwd() .. "/TESTS/sheets/_helpers.lua")

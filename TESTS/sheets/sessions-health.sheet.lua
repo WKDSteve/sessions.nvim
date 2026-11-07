@@ -2,7 +2,7 @@
 return {
   id = "sessions.health",
   title = "sessions.nvim: :checkhealth sessions, healthy and with the broken paths",
-  task = "sessions.nvim/testblatt-bindings-checkliste",
+  task = "sessions.nvim/manual-checklist-run",
   steps = {
     {
       lua = [[dofile(vim.fn.getcwd() .. "/TESTS/sheets/_helpers.lua")

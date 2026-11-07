@@ -2,7 +2,7 @@
 return {
   id = "sessions.branches",
   title = "sessions.nvim: one session per branch, no reload on checkout, branch only when git-aware",
-  task = "sessions.nvim/testblatt-bindings-checkliste",
+  task = "sessions.nvim/manual-checklist-run",
   steps = {
     {
       lua = [[dofile(vim.fn.getcwd() .. "/TESTS/sheets/_helpers.lua")

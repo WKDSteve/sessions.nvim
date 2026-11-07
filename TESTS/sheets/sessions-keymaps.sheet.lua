@@ -3,7 +3,7 @@
 return {
   id = "sessions.keymaps",
   title = "sessions.nvim: keymaps press their commands, a list of lhs works, a desc on each, a group label",
-  task = "sessions.nvim/testblatt-bindings-checkliste",
+  task = "sessions.nvim/manual-checklist-run",
   steps = {
     {
       lua = [[dofile(vim.fn.getcwd() .. "/TESTS/sheets/_helpers.lua")

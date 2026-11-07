@@ -2,7 +2,7 @@
 return {
   id = "sessions.delete-rename",
   title = "sessions.nvim: delete takes the companion, rename refuses an existing name, no keymap for either",
-  task = "sessions.nvim/testblatt-bindings-checkliste",
+  task = "sessions.nvim/manual-checklist-run",
   steps = {
     {
       lua = [[dofile(vim.fn.getcwd() .. "/TESTS/sheets/_helpers.lua")

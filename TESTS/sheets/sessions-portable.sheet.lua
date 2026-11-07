@@ -2,7 +2,7 @@
 return {
   id = "sessions.portable",
   title = "sessions.nvim: relative_paths stores a placeholder for new saves, root_remap applies at every load",
-  task = "sessions.nvim/testblatt-bindings-checkliste",
+  task = "sessions.nvim/manual-checklist-run",
   steps = {
     {
       lua = [[dofile(vim.fn.getcwd() .. "/TESTS/sheets/_helpers.lua")

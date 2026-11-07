@@ -2,7 +2,7 @@
 return {
   id = "sessions.lifecycle",
   title = "sessions.nvim: save, list, current, load and their bare forms (no chip: the notify is the feedback)",
-  task = "sessions.nvim/testblatt-bindings-checkliste",
+  task = "sessions.nvim/manual-checklist-run",
   steps = {
     {
       lua = [[dofile(vim.fn.getcwd() .. "/TESTS/sheets/_helpers.lua")

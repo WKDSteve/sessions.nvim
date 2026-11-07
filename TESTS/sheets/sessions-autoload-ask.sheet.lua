@@ -3,7 +3,7 @@
 return {
   id = "sessions.autoload-ask",
   title = 'sessions.nvim: autoload = "ask" names the session; yes loads it, no leaves an empty buffer',
-  task = "sessions.nvim/testblatt-bindings-checkliste",
+  task = "sessions.nvim/manual-checklist-run",
   steps = {
     {
       lua = [[dofile(vim.fn.getcwd() .. "/TESTS/sheets/_helpers.lua")
