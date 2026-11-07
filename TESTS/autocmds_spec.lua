@@ -183,6 +183,32 @@ return function(H)
     core.delete("last")
     core.forget_current_on_dir_change()
 
+    -- Outside any project the autosave resolves to 'last' itself: an empty editor must not erase
+    -- the last real session through that door either (the snapshot's own guard does not see it).
+    do
+      setup({ autosave = true, save_last = true })
+      load_module().enable()
+      vim.fn.mkdir(root(), "p")
+      vim.fn.writefile({ "the last real session" }, last_file())
+      vim.cmd("silent! %bwipeout!")
+      vim.api.nvim_exec_autocmds("VimLeavePre", {})
+      H.eq(
+        vim.fn.readfile(last_file())[1],
+        "the last real session",
+        "an empty exit outside a project leaves 'last' alone"
+      )
+      H.falsy(core.current(), "and no session became current")
+
+      vim.cmd.edit(vim.fn.fnameescape(file))
+      vim.api.nvim_exec_autocmds("VimLeavePre", {})
+      H.ok(
+        vim.fn.readfile(last_file())[1] ~= "the last real session",
+        "with a file open, the same exit writes it"
+      )
+      core.delete("last")
+      core.forget_current_on_dir_change()
+    end
+
     -- :LastSession must not turn "last" into the workspace: after loading it, a
     -- bare save (and so the autosave on exit) still goes to the project/branch
     -- session instead of overwriting only "last".

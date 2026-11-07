@@ -307,7 +307,8 @@ project/branch-aware setup does not turn it into the workspace either: a bare
 `:Session save` and the autosave on exit still go to the project's own
 session. `last` is also never offered by `:Session stale` / `delete-stale`. It is skipped when no real file buffer is open
 (an empty `nvim` or a lone commit message must not erase the last real
-session). With no `last` yet — fresh install — or `save_last = false`,
+session), and so is an autosave that would land on `last` (outside any project
+the auto-resolved name is `default_name`). With no `last` yet — fresh install — or `save_last = false`,
 `:LastSession` resolves like a bare `:Session load`.
 
 - **Usercmds:** `:LastSession`

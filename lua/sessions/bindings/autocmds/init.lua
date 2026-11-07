@@ -185,10 +185,10 @@ function M.enable()
         -- when configured): autosave then targets *this* project's session
         -- instead of one name shared by every project (see core.lua's
         -- resolve() and docs/configuration.md).
-        require("sessions.core").save(nil)
+        require("sessions.core").save(nil, { autosave = true })
       elseif type(an) == "string" and an ~= "" then
         -- Opt-in: pin autosave to one fixed name regardless of project/branch.
-        require("sessions.core").save(an)
+        require("sessions.core").save(an, { autosave = true })
       end
       -- an == false/nil: autosave configured off despite cfg.autosave.
     end, {
