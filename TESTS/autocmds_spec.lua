@@ -209,6 +209,40 @@ return function(H)
       core.forget_current_on_dir_change()
     end
 
+    -- In a project too: an empty editor must not replace the project's session with an empty one.
+    do
+      local stub = H.stub("sessions.git", {
+        resolve_name = function()
+          return "proj_empty"
+        end,
+        current_branch = function()
+          return nil
+        end,
+      })
+      setup({ autosave = true, branch_aware = true })
+      load_module().enable()
+      local project_file = root() .. "/proj_empty.vim"
+      vim.cmd("silent! %bwipeout!")
+      vim.api.nvim_exec_autocmds("VimLeavePre", {})
+      H.eq(vim.fn.filereadable(project_file), 1, "no session yet: the empty exit still writes one")
+      vim.fn.writefile({ "the project's real session" }, project_file)
+      vim.api.nvim_exec_autocmds("VimLeavePre", {})
+      H.eq(
+        vim.fn.readfile(project_file)[1],
+        "the project's real session",
+        "an empty exit leaves an existing project session alone"
+      )
+      vim.cmd.edit(vim.fn.fnameescape(file))
+      vim.api.nvim_exec_autocmds("VimLeavePre", {})
+      H.ok(
+        vim.fn.readfile(project_file)[1] ~= "the project's real session",
+        "with a file open, the same exit writes it"
+      )
+      core.delete("proj_empty")
+      core.forget_current_on_dir_change()
+      stub()
+    end
+
     -- :LastSession must not turn "last" into the workspace: after loading it, a
     -- bare save (and so the autosave on exit) still goes to the project/branch
     -- session instead of overwriting only "last".

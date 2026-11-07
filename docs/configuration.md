@@ -48,6 +48,7 @@ require("sessions").setup({
   --   "name"  -- pin autosave to this one fixed session regardless of
   --             project/branch (the old default's behavior).
   --   false   -- no autosave despite autosave = true.
+  -- An exit with no real file buffer open never overwrites an existing session.
   autosave_name = true,
 
   -- On exit, ALWAYS also write the session `default_name` ("last"): the

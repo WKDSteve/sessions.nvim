@@ -540,7 +540,7 @@ end
 -- =========================================================
 
 ---@param name string|nil  Explicit name; nil = auto-resolve
----@param opts? { snapshot?: boolean, autosave?: boolean }  `snapshot`: write the file (and its sidecars) only -- do not become the current session, do not move the remembered last-loaded pointer, do not run `hooks.on_save`, and skip when no real file buffer is open (see `M.save_last`). `autosave`: the exit autosave; skipped when it resolves to the exit-snapshot slot with no real file buffer open
+---@param opts? { snapshot?: boolean, autosave?: boolean }  `snapshot`: write the file (and its sidecars) only -- do not become the current session, do not move the remembered last-loaded pointer, do not run `hooks.on_save`, and skip when no real file buffer is open (see `M.save_last`). `autosave`: the exit autosave; with no real file buffer open it never overwrites an existing session, nor writes the exit-snapshot slot
 ---@return boolean ok
 ---@return string|nil path_or_err
 ---@return string[]|nil stale  Buffers dropped because their file no longer exists
@@ -562,10 +562,16 @@ function M.save(name, opts)
 
   local si = resolve(name, true) -- save: auto-resolve a project/branch name when unnamed
 
-  -- Outside any project the auto-resolved name IS `default_name`, so the exit
-  -- autosave reaches the snapshot slot without the snapshot's own guard above:
-  -- an empty `nvim`, quit, would erase the last real session.
-  if opts and opts.autosave and M.is_snapshot_slot(si.name) and not has_restorable_buffer() then
+  -- An empty `nvim` in a project, quit, must not replace that project's session
+  -- with an empty one. Outside any project the auto-resolved name IS
+  -- `default_name`, so the same exit reaches the snapshot slot without the
+  -- snapshot's own guard above: that must not erase the last real session.
+  if
+    opts
+    and opts.autosave
+    and not has_restorable_buffer()
+    and (M.is_snapshot_slot(si.name) or fn.filereadable(si.path) == 1)
+  then
     return false, "no file buffer open"
   end
 
