@@ -30,6 +30,17 @@ end
 
 _G.STORE = fresh_dir(tmp .. "/store") -- the session root of every sheet
 
+---For a sheet with a `restart` step: the store and the projects below `stdpath("data")` instead of the temp directory.
+---The editor removes its temp directory when it quits, the sandbox's `stdpath` directories stay for the next editor.
+---Call it in every editor of the sheet, before `_G.setup` and `_G.repo`.
+function _G.persistent()
+  local base = vim.fn.stdpath("data") .. "/sheet"
+  _G.STORE = fresh_dir(base .. "/store")
+  function _G.project(name)
+    return fresh_dir(base .. "/projects/" .. name)
+  end
+end
+
 ---ui.nvim on the runtimepath, for the sheets of the chip, the dialogs and the kit menu. Call before `_G.setup`.
 function _G.with_ui()
   vim.opt.rtp:append(vim.g.sessions_sheets_ui_nvim)
