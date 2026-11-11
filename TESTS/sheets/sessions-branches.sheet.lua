@@ -1,6 +1,7 @@
 -- Live check: section 3 of ALL/manual-test-checklists/sessions.md, on a real git repository.
 return {
   id = "sessions.branches",
+  feature = "sessions.naming",
   title = "sessions.nvim: one session per branch, no reload on checkout, branch only when git-aware",
   task = "sessions.nvim/manual-checklist-run",
   steps = {

@@ -1,6 +1,7 @@
 -- Live check: section 5 of ALL/manual-test-checklists/sessions.md.
 return {
   id = "sessions.delete-rename",
+  feature = "sessions.delete-rename",
   title = "sessions.nvim: delete takes the companion, rename refuses an existing name, no keymap for either",
   task = "sessions.nvim/manual-checklist-run",
   steps = {

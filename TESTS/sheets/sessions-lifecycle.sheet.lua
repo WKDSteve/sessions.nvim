@@ -1,6 +1,7 @@
 -- Live check: section 2 of ALL/manual-test-checklists/sessions.md, the run without the chip.
 return {
   id = "sessions.lifecycle",
+  feature = "sessions.lifecycle",
   title = "sessions.nvim: save, list, current, load and their bare forms (no chip: the notify is the feedback)",
   task = "sessions.nvim/manual-checklist-run",
   steps = {

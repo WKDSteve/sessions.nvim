@@ -1,6 +1,7 @@
 -- Live check: section 8 of ALL/manual-test-checklists/sessions.md.
 return {
   id = "sessions.tabs",
+  feature = "sessions.tabs",
   title = "sessions.nvim: tab sessions live apart, open in a new tab and leave the tracked session alone",
   task = "sessions.nvim/manual-checklist-run",
   steps = {

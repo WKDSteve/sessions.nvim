@@ -2,6 +2,7 @@
 -- with a real exit, on the same temporary store (`_G.proc`).
 return {
   id = "sessions.exit",
+  feature = "sessions.autosave",
   title = "sessions.nvim: the exit writes the project's session and last.vim, :LastSession brings them back",
   task = "sessions.nvim/manual-checklist-run",
   steps = {

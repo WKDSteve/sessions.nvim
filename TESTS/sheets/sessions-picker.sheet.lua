@@ -2,6 +2,7 @@
 -- for Snacks.picker takes what :SessionLoad hands over and plays its actions back. The real pickers are in `manual`.
 return {
   id = "sessions.picker",
+  feature = "sessions.picker",
   title = "sessions.nvim: :SessionLoad hands over items and previews, <CR> loads, <C-d> deletes the selection",
   task = "sessions.nvim/manual-checklist-run",
   steps = {

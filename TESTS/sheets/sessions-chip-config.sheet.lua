@@ -2,6 +2,7 @@
 -- `kit.chip` id would be slower than a remount, and the plugin mounts once per setup, so each case mounts anew.
 return {
   id = "sessions.chip-config",
+  feature = "sessions.chip",
   title = "sessions.nvim: anchor, shape, min_width, timeout_ms, track_mode and pulse of the chip",
   task = "sessions.nvim/manual-checklist-run",
   steps = {

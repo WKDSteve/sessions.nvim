@@ -1,6 +1,7 @@
 -- Live check: sections 2 and 14 of ALL/manual-test-checklists/sessions.md, with the real chip of ui.nvim.
 return {
   id = "sessions.chip",
+  feature = "sessions.chip",
   title = "sessions.nvim: the chip replaces the saved/loaded notify, hides itself and toggles",
   task = "sessions.nvim/manual-checklist-run",
   steps = {

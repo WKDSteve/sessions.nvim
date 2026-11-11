@@ -2,6 +2,7 @@
 -- `doautocmd VimEnter` stands in for the start: the prompt is a float a headless second process has nobody to answer.
 return {
   id = "sessions.autoload-ask",
+  feature = "sessions.autoload",
   title = 'sessions.nvim: autoload = "ask" names the session; yes loads it, no leaves an empty buffer',
   task = "sessions.nvim/manual-checklist-run",
   steps = {

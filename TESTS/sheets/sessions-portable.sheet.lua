@@ -1,6 +1,7 @@
 -- Live check: section 7 of ALL/manual-test-checklists/sessions.md.
 return {
   id = "sessions.portable",
+  feature = "sessions.portable",
   title = "sessions.nvim: relative_paths stores a placeholder for new saves, root_remap applies at every load",
   task = "sessions.nvim/manual-checklist-run",
   steps = {

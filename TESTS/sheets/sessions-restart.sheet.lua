@@ -27,6 +27,7 @@ _G.quit_file = vim.fn.stdpath("data") .. "/sheet/quit-shape.json"
 
 return {
   id = "sessions.restart",
+  feature = "sessions.autosave",
   title = "sessions.nvim: quit a project with splits, nvim +LastSession brings the same layout back",
   task = "sessions.nvim/manual-checklist-run",
   sizes = { { rows = 40, cols = 120 } },

@@ -2,6 +2,7 @@
 -- attach file of the machine (lua/bindings/mappings/sessions.lua) is the owner's real config and stays in `manual`.
 return {
   id = "sessions.keymaps",
+  feature = "sessions.keymaps",
   title = "sessions.nvim: keymaps press their commands, a list of lhs works, a desc on each, a group label",
   task = "sessions.nvim/manual-checklist-run",
   steps = {

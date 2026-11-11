@@ -1,6 +1,7 @@
 -- Live check: section 15 of ALL/manual-test-checklists/sessions.md, on a real git repository with a deleted branch.
 return {
   id = "sessions.stale",
+  feature = "sessions.stale",
   title = "sessions.nvim: stale means the branch is gone; one question for the batch; save-timestamp",
   task = "sessions.nvim/manual-checklist-run",
   steps = {

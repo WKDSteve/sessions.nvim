@@ -1,6 +1,7 @@
 -- Live check: section 16 of ALL/manual-test-checklists/sessions.md: pins, defaults and the edit menu with its question.
 return {
   id = "sessions.marks-edit",
+  feature = "sessions.marks",
   title = "sessions.nvim: pin, unpin, defaults sync/reset, the edit menu and its question on a pinned line",
   task = "sessions.nvim/manual-checklist-run",
   steps = {

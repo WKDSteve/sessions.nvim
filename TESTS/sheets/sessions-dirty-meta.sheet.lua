@@ -1,6 +1,7 @@
 -- Live check: sections 10 and 11 of ALL/manual-test-checklists/sessions.md.
 return {
   id = "sessions.dirty-meta",
+  feature = "sessions.status",
   title = "sessions.nvim: the dirty marker follows structure, not text; the metadata companion file",
   task = "sessions.nvim/manual-checklist-run",
   steps = {

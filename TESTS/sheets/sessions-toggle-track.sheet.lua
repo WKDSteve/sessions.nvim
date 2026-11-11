@@ -1,6 +1,7 @@
 -- Live check: section 6 of ALL/manual-test-checklists/sessions.md, on a real git repository as the session root.
 return {
   id = "sessions.toggle-track",
+  feature = "sessions.toggle-track",
   title = "sessions.nvim: toggle-track needs a repo, flips skip-worktree and answers asynchronously",
   task = "sessions.nvim/manual-checklist-run",
   steps = {

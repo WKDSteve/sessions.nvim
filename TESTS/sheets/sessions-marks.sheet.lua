@@ -1,6 +1,7 @@
 -- Live check: section 16 of ALL/manual-test-checklists/sessions.md: the list, jumps, preview, debug and harpoon.
 return {
   id = "sessions.marks",
+  feature = "sessions.marks",
   title = "sessions.nvim: :Session marks add, list, remove, select, preview, debug, import-harpoon",
   task = "sessions.nvim/manual-checklist-run",
   steps = {

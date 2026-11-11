@@ -1,6 +1,7 @@
 -- Live check: section 14 of ALL/manual-test-checklists/sessions.md: without ui.nvim on the runtimepath.
 return {
   id = "sessions.no-chip",
+  feature = "sessions.chip",
   title = "sessions.nvim: without ui.nvim no chip, no error, chip-toggle does nothing, the notify is back",
   task = "sessions.nvim/manual-checklist-run",
   steps = {

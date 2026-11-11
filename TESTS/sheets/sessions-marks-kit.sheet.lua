@@ -2,6 +2,7 @@
 -- when a named picker is not installed. Snacks, Telescope and fzf-lua themselves are in `manual`.
 return {
   id = "sessions.marks-kit",
+  feature = "sessions.marks",
   title = "sessions.nvim: :Session marks opens the kit menu: preview, keys, close; a missing picker falls back",
   task = "sessions.nvim/manual-checklist-run",
   sizes = { { rows = 40, cols = 120 } },
