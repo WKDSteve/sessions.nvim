@@ -1,5 +1,5 @@
 ---@module 'sessions.health'
----@brief :checkhealth report: Neovim/API prerequisites, lib.nvim soft-dependency
+---@brief :checkhealth report: Neovim/API prerequisites, lib.nvim (a hard dependency)
 ---@description
 --- status, current configuration, and registered commands.
 
