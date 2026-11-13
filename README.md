@@ -106,3 +106,19 @@ question each page answers.
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 sessions.nvim is released under the [MIT License](https://opensource.org/licenses/MIT).
+
+<!-- connections:begin (written by the app-icons tool of the workshop; change integrations.json there, not this block) -->
+## Connections
+
+![sessions.nvim: what it uses and what uses it](assets/graphs/sessions.nvim.png)
+
+**Uses**
+
+- [ui.nvim](https://github.com/WKDSteve/ui.nvim): sessions.nvim asks for confirmations with `kit.confirm` of ui.nvim when it is installed. ([picture](assets/graphs/pair/sessions.nvim--ui.nvim.png))
+- [lib.nvim](https://github.com/WKDSteve/lib.nvim): the shared base of the plugins.
+
+**Used by**
+
+- [gitsuite.nvim](https://github.com/WKDSteve/gitsuite.nvim): In its branch feature, gitsuite.nvim saves and loads a session through sessions.nvim (`sessions.core`). ([picture](assets/graphs/pair/gitsuite.nvim--sessions.nvim.png))
+- [ui.nvim](https://github.com/WKDSteve/ui.nvim): ui.nvim has a slot for the marks of sessions.nvim (`sessions.marks`) and says so when sessions.nvim is missing. ([picture](assets/graphs/pair/ui.nvim--sessions.nvim.png))
+<!-- connections:end -->
