@@ -189,6 +189,10 @@ back after the load:
 | the open folders of the files | opened again (the ones that still exist) |
 | the view on screen (`files`, `buffers`, `git`, a view another plugin registered) | shown again; a view that no longer exists is left out, the files stay |
 
+A save in the middle of work closes the tree as well (it is one of the `nofile`
+buffers the clean save wipes); sessions.nvim shows it again at once, as it was.
+Only the save on the way out leaves it closed.
+
 A tree that is closed at the time of the save writes no sidecar, and removes
 the one of an earlier save: the next load leaves the tree alone. The window
 that had the focus keeps it. Saving never loads filetree.nvim; loading does,

@@ -322,7 +322,50 @@ return function(H)
     H.ok(saved, "the state was read before the wipe")
     H.eq(saved.view, "git")
     H.eq(saved.expanded[1], proj .. "/lua")
+    H.eq(
+      table.concat(calls, " | "),
+      ("set_root %s | open | expand %s | switch git"):format(proj, proj .. "/lua"),
+      "a save in the middle of work shows the tree again, as it was"
+    )
 
+    local function forget_calls()
+      for i = #calls, 1, -1 do
+        calls[i] = nil
+      end
+    end
+    ---A tree window again (the fake's `open` does not make one).
+    local function open_tree_window()
+      vim.cmd("vsplit")
+      tree_buf = api.nvim_create_buf(false, true)
+      vim.bo[tree_buf].buftype = "nofile"
+      api.nvim_win_set_buf(0, tree_buf)
+      vim.cmd("wincmd p")
+    end
+
+    -- the save on the way out does not: the editor is closing
+    forget_calls()
+    open_tree_window()
+    H.ok(core.save("withtree", { autosave = true }))
+    H.eq(#calls, 0, "the exit autosave leaves the tree closed")
+    open_tree_window()
+    H.ok(core.save("withtree", { snapshot = true }))
+    H.eq(#calls, 0, "and so does the exit snapshot")
+    H.ok(json.read(root .. "/.withtree.tree.json"), "both still write the sidecar")
+
+    -- a save that gives up early has closed the tree just the same: it comes back too
+    open_tree_window()
+    local blocked = H.fail_json_writes({ ".withtree.tree.json" })
+    H.ok(core.save("withtree"), "a sidecar that cannot be written is a warning, not a failed save")
+    blocked()
+    H.eq(
+      table.concat(calls, " | "),
+      ("set_root %s | open | expand %s | switch git"):format(proj, proj .. "/lua"),
+      "the tree is shown again all the same"
+    )
+    open_tree_window()
+    H.ok(core.save("withtree"))
+
+    forget_calls()
     tree.root, tree.view, tree.expanded = dir, "files", {}
     H.ok(core.load("withtree"))
     H.eq(
@@ -331,21 +374,16 @@ return function(H)
       "a load puts the tree back"
     )
 
-    -- saved again with the tree closed: the next load leaves the tree alone
-    for i = #calls, 1, -1 do
-      calls[i] = nil
-    end
+    -- saved again with the tree closed: nothing is shown, and the next load leaves the tree alone
+    forget_calls()
     H.ok(core.save("withtree"))
     H.eq(vim.fn.filereadable(root .. "/.withtree.tree.json"), 0, "no tree, no sidecar")
+    H.eq(#calls, 0, "a save without a tree opens none")
     H.ok(core.load("withtree"))
     H.eq(#calls, 0)
 
     -- rename and delete take the sidecar along
-    vim.cmd("vsplit")
-    tree_buf = api.nvim_create_buf(false, true)
-    vim.bo[tree_buf].buftype = "nofile"
-    api.nvim_win_set_buf(0, tree_buf)
-    vim.cmd("wincmd p")
+    open_tree_window()
     H.ok(core.save("withtree"))
     H.ok(core.rename("withtree", "moved"))
     H.eq(vim.fn.filereadable(root .. "/.moved.tree.json"), 1, "core.rename moves it")
@@ -364,12 +402,10 @@ return function(H)
       restore_tree = false,
       marks = { enable = true, scope = "global", defaults = { a }, import_harpoon = false },
     })
-    vim.cmd("vsplit")
-    tree_buf = api.nvim_create_buf(false, true)
-    vim.bo[tree_buf].buftype = "nofile"
-    api.nvim_win_set_buf(0, tree_buf)
-    vim.cmd("wincmd p")
+    open_tree_window()
+    forget_calls()
     H.ok(core.save("plain"))
+    H.eq(#calls, 0, "restore_tree = false: the tree is not asked and not shown again")
     H.eq(
       vim.fn.filereadable(root .. "/.plain.tree.json"),
       0,

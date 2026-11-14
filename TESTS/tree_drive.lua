@@ -117,7 +117,18 @@ local state =
 T.eq("the sidecar names the view", state.view, "buffers")
 T.eq("... the root", T.norm(state.root), dir)
 T.eq("... and the open folders", vim.tbl_map(T.norm, state.expanded), open_before)
-T.eq("the save closed the tree (its buffer is nofile)", T.adapter.is_open(), false)
+-- the save wipes the tree buffer (it is nofile) and shows the tree again, as it was
+T.ok(
+  "after a save in the middle of work the tree is open again",
+  T.wait(function()
+    return T.adapter.is_open()
+  end)
+)
+T.eq("... in the view it showed", switcher.current(), "buffers")
+T.ok(
+  "... and the focus stayed in the editor",
+  vim.api.nvim_get_current_win() ~= T.adapter.get_winid()
+)
 
 -- another state than the saved one: the files, every folder closed, the tree closed again
 T.ok("fixture: the files", (switcher.switch("files")))

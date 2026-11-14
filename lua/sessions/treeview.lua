@@ -5,7 +5,8 @@
 --- the session is written), so a restored session came back without the tree, or with a tree at the
 --- working directory and every folder closed. This module writes what the tree showed to a hidden
 --- `.{name}.tree.json` next to the session file (the convention of `sessions.buforder` and
---- `sessions.pins`) and puts it back after the session was sourced.
+--- `sessions.pins`) and puts it back after the session was sourced. A save in the middle of work
+--- closes the tree too; `sessions.core` shows it again at once from the state it just captured.
 ---
 --- Which tree: the own tree of filetree.nvim (`adapter = "native"`), the one with views (files,
 --- buffers, git, the views other plugins register). Read and written through filetree.nvim's public
@@ -188,11 +189,20 @@ end
 
 ---Show the tree again as the session saved it: open it at the saved root, open the saved folders,
 ---switch to the saved view. A no-op without a sidecar, without filetree.nvim, or when filetree.nvim
----is not set up on its own tree. The window that had the focus keeps it.
+---is not set up on its own tree. The window that had the focus keeps it. See `M.apply`.
 ---@param session_path string
 ---@return boolean applied
 function M.restore(session_path)
-  local state = checked(require("lib.nvim.fs.json").read(sidecar_path(session_path)))
+  return M.apply(require("lib.nvim.fs.json").read(sidecar_path(session_path)))
+end
+
+---Show the tree as `state` describes it (what `capture` returned, or a sidecar as read from disk:
+---it is checked here either way). `sessions.core` calls it right after a save in the middle of work,
+---which closed the tree with the other `nofile` buffers.
+---@param state any
+---@return boolean applied
+function M.apply(state)
+  state = checked(state)
   if not state then
     return false
   end

@@ -551,13 +551,16 @@ end
 -- Public API
 -- =========================================================
 
----@param name string|nil  Explicit name; nil = auto-resolve
----@param opts? { snapshot?: boolean, autosave?: boolean }  `snapshot`: write the file (and its sidecars) only -- do not become the current session, do not move the remembered last-loaded pointer, do not run `hooks.on_save`, and skip when no real file buffer is open (see `M.save_last`). `autosave`: the exit autosave; with no real file buffer open it never overwrites an existing session, nor writes the exit-snapshot slot
+---@internal
+---`M.save` without what comes after it. `on_tree` is handed what the tree showed before the wipe
+---closed it (nil: no tree).
+---@param name string|nil
+---@param opts? { snapshot?: boolean, autosave?: boolean }
+---@param on_tree fun(state: Sessions.TreeState|nil)
 ---@return boolean ok
 ---@return string|nil path_or_err
----@return string[]|nil stale  Buffers dropped because their file no longer exists
----@see sessions.layout, sessions.portable, sessions.meta
-function M.save(name, opts)
+---@return string[]|nil stale
+local function save_session(name, opts, on_tree)
   local cfg = require("sessions.config").cfg
   local snapshot = opts and opts.snapshot or false
   apply_sessionoptions()
@@ -567,6 +570,7 @@ function M.save(name, opts)
   end
   -- Before the wipe: the tree buffer is `nofile`, one of the buffers the wipe closes.
   local tree_state = cfg.restore_tree and require("sessions.treeview").capture() or nil
+  on_tree(tree_state)
   wipe_blacklisted()
   local stale = wipe_stale()
 
@@ -651,6 +655,28 @@ function M.save(name, opts)
   end
 
   return true, si.path, stale
+end
+
+---@param name string|nil  Explicit name; nil = auto-resolve
+---@param opts? { snapshot?: boolean, autosave?: boolean }  `snapshot`: write the file (and its sidecars) only -- do not become the current session, do not move the remembered last-loaded pointer, do not run `hooks.on_save`, and skip when no real file buffer is open (see `M.save_last`). `autosave`: the exit autosave; with no real file buffer open it never overwrites an existing session, nor writes the exit-snapshot slot
+---@return boolean ok
+---@return string|nil path_or_err
+---@return string[]|nil stale  Buffers dropped because their file no longer exists
+---@see sessions.layout, sessions.portable, sessions.meta
+function M.save(name, opts)
+  -- The wipe closes the tree with the other `nofile` buffers. On the way out that is the end of it;
+  -- after a save in the middle of work the tree comes back as it was, whatever the save itself
+  -- returned (an early "no file buffer open" has closed it just the same).
+  ---@type Sessions.TreeState|nil
+  local tree_state = nil
+  local ok, path_or_err, stale = save_session(name, opts, function(state)
+    tree_state = state
+  end)
+  local leaving = vim.v.exiting ~= vim.NIL or (opts ~= nil and (opts.autosave or opts.snapshot))
+  if tree_state and not leaving then
+    pcall(require("sessions.treeview").apply, tree_state)
+  end
+  return ok, path_or_err, stale
 end
 
 ---Snapshot the exiting session under `cfg.default_name` ("last"), on top of
