@@ -48,6 +48,19 @@ return {
   -- above, and restored after it: pin restore needs buforder's final,
   -- stable bufnr mapping for the tab, not the one `:mksession` alone gives.
   restore_pinned_buffers = true,
+  -- Persist what the file tree showed (filetree.nvim's own tree, `adapter =
+  -- "native"`): its root, the view on screen (files, buffers, git, ...) and
+  -- the open folders. `:mksession` cannot carry the tree window, so without
+  -- this a session comes back without the tree. No-op (and no sidecar
+  -- written) without filetree.nvim, with another tree plugin behind it, or
+  -- when the tree is closed at the time of the save. See sessions.treeview.
+  restore_tree = true,
+  -- A sign in a tree view on every pinned file (a default or a pin of the
+  -- marks): the decorator `pin` at lib.nvim.tree.registry, read by the own
+  -- tree of filetree.nvim. true: registered; { sign = "<one cell>" }: with
+  -- another sign (default "*"); false: not registered. Nothing is read until
+  -- a tree shows the signs. See sessions.integrations.tree.
+  tree = true,
   -- Attach `opts.title = "Sessions"` to `:Session`/autoload notify calls --
   -- picked up by any rich `vim.notify` backend (ui.nvim's `ui.notify`,
   -- nvim-notify, noice, snacks) that renders a title/colour from it.

@@ -171,6 +171,55 @@ complete no-op — and writes no sidecar — without `ui.nvim` installed.
 - **Module:** `lua/sessions/pins.lua`
 - **Config:** `opts.restore_pinned_buffers` (default `true`)
 
+## The file tree comes back with a session
+
+`:mksession` cannot carry a tree window: its buffer is `nofile`, and the
+[clean save](#clean-save) closes it before the session is written. A restored
+session therefore came back without the tree, or with a tree at the working
+directory and every folder closed.
+
+With the own tree of [filetree.nvim](https://github.com/WKDSteve/filetree.nvim)
+(`adapter = "native"`, the one with views) sessions.nvim saves what the tree
+showed to a hidden `.{name}.tree.json` next to the session file and puts it
+back after the load:
+
+| Saved | Restored |
+| --- | --- |
+| the root folder | the tree opens there (a root that is gone is skipped, the tree still opens) |
+| the open folders of the files | opened again (the ones that still exist) |
+| the view on screen (`files`, `buffers`, `git`, a view another plugin registered) | shown again; a view that no longer exists is left out, the files stay |
+
+A tree that is closed at the time of the save writes no sidecar, and removes
+the one of an earlier save: the next load leaves the tree alone. The window
+that had the focus keeps it. Saving never loads filetree.nvim; loading does,
+and only for a session that has the sidecar. The sidecar is checked field by
+field before anything reaches the tree.
+
+One place per session: filetree.nvim has a `session` feature of its own (off by
+default) that keeps root and open folders per **project** and knows nothing of
+the view. With named sessions leave it off, or the two restore over each other.
+
+- **Module:** `lua/sessions/treeview.lua`
+- **Config:** `opts.restore_tree` (default `true`)
+- **Dependency:** filetree.nvim on its own tree (soft: a no-op without it, and with another tree plugin behind it)
+
+## A sign in the tree on pinned files
+
+A default or a pin of the [marks](#marks) carries a sign in the first cell of
+its line in the tree, so the files you always come back to stand out where
+all files are listed. The sign follows `:Session marks pin` and `unpin` at
+once.
+
+sessions.nvim registers the decorator `pin` at `lib.nvim.tree.registry`; a tree
+that reads the registry draws it (today the own tree of filetree.nvim). The
+tree asks for the sign while it draws a line, so the answer is a table lookup:
+the pins file is read when a tree starts to show signs and again when a pin is
+written, never per line. Without `marks.enable` there are no pins and no signs.
+
+- **Module:** `lua/sessions/integrations/tree.lua`
+- **Config:** `opts.tree` (default `true`; `{ sign = "<one cell>" }` for another sign than `*`, `false` registers nothing)
+- **Dependency:** `lib.nvim.tree.registry` and a tree that reads it (soft: without them nothing is registered or drawn)
+
 ## Autoload / autosave
 
 Loads the contextual session automatically on a plain `nvim` start (no

@@ -37,6 +37,17 @@ function M.setup(opts)
     )
   end
 
+  -- A sign on pinned files in a tree view: one entry at lib.nvim's registry, read by filetree.nvim's
+  -- own tree when there is one. Registering reads nothing; `tree = false` leaves it out.
+  pcall(function()
+    local integration = require("sessions.integrations.tree")
+    if cfg.tree == false then
+      integration.unregister()
+    else
+      integration.register(type(cfg.tree) == "table" and cfg.tree or nil)
+    end
+  end)
+
   vim.g.loaded_sessions_nvim = 1
 end
 

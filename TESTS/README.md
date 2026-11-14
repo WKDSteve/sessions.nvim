@@ -73,6 +73,8 @@ which is all the process-free branch resolution ever reads.
 | `usercmds_spec.lua` | every `:Session` subcommand, `:LastSession`, `:SessionLoad` and the completion types — driven through real `:` commands |
 | `usercmds_help_spec.lua` | every flag of `:Session` (`marks add`, `marks pin`) has a line in lib.nvim's option float: `composer.help.undocumented("Session")` is empty |
 | `autocmds_spec.lua` | the VimEnter autoload, the VimLeavePre autosave and the dirty-tracking events, fired with `nvim_exec_autocmds` |
+| `treeview_spec.lua` | the tree state of a session (`.{name}.tree.json`: root, view, open folders), read before the blacklist wipe and put back after a load, with a hostile sidecar and through `core`; and the decorator `pin` at lib.nvim's tree registry, following pin and unpin with the disk closed during the lookup. filetree.nvim is a fake here (`H.stub`) |
+| `tree_drive.lua` (a hand run, not in the suite) | the same against the real own tree of filetree.nvim: `FILETREE_NVIM_DIR=<checkout> nvim --clean --headless -u NONE -l TESTS/tree_drive.lua`. filetree.nvim is no dependency, so its checkout never decides about this suite |
 | `init_spec.lua` | `setup()` — including that it is a one-shot — and the public API on `sessions` |
 
 Adding one: write `TESTS/<name>_spec.lua` returning `function(H) ... end`.

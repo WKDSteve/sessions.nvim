@@ -81,6 +81,21 @@ require("sessions").setup({
   -- tab, not the one :mksession alone left behind.
   restore_pinned_buffers = true,
 
+  -- Persist what the file tree showed: its root, the view on screen (files,
+  -- buffers, git, ...) and the open folders. Only for filetree.nvim's own
+  -- tree (adapter = "native"); stored in a `.{name}.tree.json` sidecar and
+  -- put back after the load. A no-op that writes nothing without
+  -- filetree.nvim, with another tree plugin behind it, or when the tree is
+  -- closed at the time of the save. With this on, leave filetree.nvim's
+  -- own `session` feature off (see docs/FEATURES.md).
+  restore_tree = true,
+
+  -- A sign in a tree view on every default and pin of the marks (the
+  -- decorator `pin` at lib.nvim.tree.registry, read by filetree.nvim's own
+  -- tree). true = registered; { sign = "<one cell>" } = another sign than
+  -- "*"; false = not registered. Needs marks.enable for there to be pins.
+  tree = true,
+
   -- Attach opts.title = "Sessions" to :Session/autoload notify calls. A
   -- rich vim.notify backend (ui.nvim's ui.notify, nvim-notify, noice,
   -- snacks) can render a title/colour from it; the plain :messages echo

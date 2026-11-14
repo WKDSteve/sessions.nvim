@@ -291,6 +291,26 @@ local function read_pins()
 end
 
 ---@internal
+---Who wants to know that the pins file was written (`M.on_pins_changed`).
+---@type table<integer, fun()>
+local pin_listeners = {}
+local next_pin_listener = 0
+
+---Call `fn()` after a pin was added or removed. For readers that keep something derived from the pins
+---(the sign in a tree view, `sessions.integrations.tree`). A listener that raises is skipped: it must
+---not be able to fail a pin that is already written.
+---@param fn fun()
+---@return fun() remove
+function M.on_pins_changed(fn)
+  next_pin_listener = next_pin_listener + 1
+  local id = next_pin_listener
+  pin_listeners[id] = fn
+  return function()
+    pin_listeners[id] = nil
+  end
+end
+
+---@internal
 ---@param pins string[]
 ---@return boolean
 local function write_pins(pins)
@@ -298,6 +318,10 @@ local function write_pins(pins)
   local ok, err = json.write(M.pins_path(), pins)
   if not ok then
     notify().error("cannot write " .. M.pins_path() .. ": " .. tostring(err))
+  else
+    for _, fn in pairs(pin_listeners) do
+      pcall(fn)
+    end
   end
   return ok
 end

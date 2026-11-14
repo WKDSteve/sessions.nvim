@@ -78,6 +78,8 @@
 ---@field metadata boolean               Write a companion .json file with save context
 ---@field restore_buffer_order boolean   Persist/restore per-tabpage `vim.t.bufs` order (NvChad tabufline etc.); no-op without such a tabline
 ---@field restore_pinned_buffers boolean Persist/restore per-tabpage tab-pin state (ui.nvim's tabline `vim.t.ui_pinned`); no-op without ui.nvim, restored after restore_buffer_order
+---@field restore_tree boolean           Persist/restore what filetree.nvim's own tree showed (root, view, open folders); no-op without it
+---@field tree boolean|Sessions.Tree.Opts A sign in a tree view on pinned files (`sessions.integrations.tree`); false registers nothing
 ---@field notify_title boolean           Attach opts.title = "Sessions" to :Session/autoload notify calls, for rich vim.notify backends; false calls vim.notify exactly as before
 ---@field hooks Sessions.Hooks
 ---@field blacklist Sessions.Blacklist
@@ -170,6 +172,8 @@
 ---@field metadata?        boolean               Write a companion .json file with save context
 ---@field restore_buffer_order? boolean          Persist/restore per-tabpage `vim.t.bufs` order (NvChad tabufline etc.); no-op without such a tabline
 ---@field restore_pinned_buffers? boolean         Persist/restore per-tabpage tab-pin state (ui.nvim's tabline `vim.t.ui_pinned`); no-op without ui.nvim, restored after restore_buffer_order
+---@field restore_tree? boolean                   Persist/restore what filetree.nvim's own tree showed (root, view, open folders); no-op without it
+---@field tree? boolean|Sessions.Tree.Opts        A sign in a tree view on pinned files (`sessions.integrations.tree`); false registers nothing
 ---@field notify_title?    boolean               Attach opts.title = "Sessions" to :Session/autoload notify calls, for rich vim.notify backends; false calls vim.notify exactly as before
 ---@field hooks?           Sessions.Hooks.Opts
 ---@field blacklist?       Sessions.Blacklist.Opts

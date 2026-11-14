@@ -565,6 +565,8 @@ function M.save(name, opts)
   if not dir_ok then
     return false, dir_err
   end
+  -- Before the wipe: the tree buffer is `nofile`, one of the buffers the wipe closes.
+  local tree_state = cfg.restore_tree and require("sessions.treeview").capture() or nil
   wipe_blacklisted()
   local stale = wipe_stale()
 
@@ -630,6 +632,14 @@ function M.save(name, opts)
     local _, pins_err = require("sessions.pins").save(si.path)
     if pins_err then
       warn_sidecar("pinned-buffers", pins_err)
+    end
+  end
+
+  if cfg.restore_tree then
+    -- without a state (no tree open) this removes the sidecar of an earlier save
+    local _, tree_err = require("sessions.treeview").save(si.path, tree_state)
+    if tree_err then
+      warn_sidecar("tree", tree_err)
     end
   end
 
@@ -789,6 +799,12 @@ function M.load(name)
     require("sessions.pins").restore(si.path)
   end
 
+  -- Last: the tree opens next to the windows the session put back. pcall: a tree that cannot be
+  -- shown must not turn a loaded session into a failed load.
+  if cfg.restore_tree then
+    pcall(require("sessions.treeview").restore, si.path)
+  end
+
   if cfg.hooks.on_load then
     pcall(cfg.hooks.on_load, si.name, si.path)
   end
@@ -913,6 +929,7 @@ function M.delete(name)
   require("sessions.meta").delete(path)
   require("sessions.buforder").delete(path)
   require("sessions.pins").delete(path)
+  require("sessions.treeview").delete(path)
   if _current == name then
     _current = nil
   end
@@ -943,6 +960,7 @@ function M.rename(old_name, new_name)
   require("sessions.meta").rename(old_path, new_path)
   require("sessions.buforder").rename(old_path, new_path)
   require("sessions.pins").rename(old_path, new_path)
+  require("sessions.treeview").rename(old_path, new_path)
   if _current == old_name then
     _current = new_name
   end
