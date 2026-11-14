@@ -86,8 +86,9 @@ require("sessions").setup({
   -- tree (adapter = "native"); stored in a `.{name}.tree.json` sidecar and
   -- put back after the load. A no-op that writes nothing without
   -- filetree.nvim, with another tree plugin behind it, or when the tree is
-  -- closed at the time of the save. With this on, leave filetree.nvim's
-  -- own `session` feature off (see docs/FEATURES.md).
+  -- closed at the time of the save. filetree.nvim's own `session` feature
+  -- is told to step back; with a filetree.nvim that has no `skip_restore`
+  -- yet, leave that feature off (see docs/FEATURES.md).
   restore_tree = true,
 
   -- A sign in a tree view on every default and pin of the marks (the

@@ -103,6 +103,9 @@ return function(H)
         return adapter
       end,
       feature = function(name)
+        if name == "session" then
+          return tree.session_feature
+        end
         return name == "source_switcher" and switcher or nil
       end,
     })
@@ -166,6 +169,38 @@ return function(H)
       "root first, then the window, the folders, the view"
     )
     H.eq(api.nvim_get_current_win(), win, "the window that had the focus keeps it")
+    restore()
+  end
+
+  do
+    -- filetree.nvim's own per-project restore is told to step back, before the tree is touched
+    local tree, calls, restore = fake_filetree()
+    H.ok(treeview.save(session, treeview.capture()))
+    tree.open = false
+    tree.session_feature = {
+      skip_restore = function()
+        calls[#calls + 1] = "skip_restore"
+      end,
+    }
+    H.ok(treeview.restore(session))
+    H.eq(calls[1], "skip_restore", "first of all")
+    H.eq(calls[2], "set_root " .. proj)
+
+    -- a feature that has no skip_restore yet (an older filetree.nvim), or one that raises
+    for i = #calls, 1, -1 do
+      calls[i] = nil
+    end
+    tree.open = false
+    tree.session_feature = {}
+    H.ok(treeview.restore(session), "an older filetree.nvim is restored all the same")
+    tree.open = false
+    tree.session_feature = {
+      skip_restore = function()
+        error("boom")
+      end,
+    }
+    H.ok(treeview.restore(session), "and a skip_restore that raises does not stop the restore")
+    H.excludes(table.concat(calls, " | "), "skip_restore")
     restore()
   end
 

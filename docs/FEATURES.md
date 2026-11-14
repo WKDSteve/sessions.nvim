@@ -197,7 +197,10 @@ field before anything reaches the tree.
 
 One place per session: filetree.nvim has a `session` feature of its own (off by
 default) that keeps root and open folders per **project** and knows nothing of
-the view. With named sessions leave it off, or the two restore over each other.
+the view. Before sessions.nvim restores a tree it tells that feature to step
+back (`skip_restore()`), so the named session wins and both may be on. A
+filetree.nvim without `skip_restore` cannot be told: with such a version leave
+its `session` feature off, or the two restore over each other.
 
 - **Module:** `lua/sessions/treeview.lua`
 - **Config:** `opts.restore_tree` (default `true`)

@@ -15,8 +15,10 @@
 --- buffer variable `filetree_view` (read only).
 ---
 --- One place per session: filetree.nvim's own `session` feature keeps root and open folders per
---- PROJECT and knows nothing of the view. With named sessions leave that feature off (its default), or
---- the two restore over each other.
+--- PROJECT and knows nothing of the view. Before it restores, this module tells that feature to step
+--- back (`feature("session").skip_restore()`), so the named session wins. A filetree.nvim that has no
+--- `skip_restore` yet cannot be told: there, leave its `session` feature off (its default), or the two
+--- restore over each other.
 ---
 --- Soft in both directions. `capture` never loads filetree.nvim (a tree that was never opened has
 --- nothing to save); `restore` loads it only when the session has a tree sidecar, that is when a tree
@@ -199,6 +201,15 @@ function M.restore(session_path)
   local adapter = ok and native_adapter(filetree) or nil
   if not adapter then
     return false
+  end
+  -- filetree.nvim's own per-project restore steps back: it would run a moment after the tree is
+  -- attached and put its root and folders over the ones of this session. Soft: the feature is off
+  -- by default (nil then), and an older filetree.nvim has no `skip_restore`.
+  if type(filetree.feature) == "function" then
+    local feature_ok, feature = pcall(filetree.feature, "session")
+    if feature_ok and type(feature) == "table" and type(feature.skip_restore) == "function" then
+      pcall(feature.skip_restore)
+    end
   end
   local win = vim.api.nvim_get_current_win()
   local opened = false
