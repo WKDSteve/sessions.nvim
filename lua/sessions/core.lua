@@ -557,11 +557,11 @@ end
 -- =========================================================
 
 ---@internal
----@internal
 ---What the tree showed when the exit autosave closed it, for the exit snapshot that follows it.
 ---@type Sessions.TreeState|nil
 local exit_tree_state = nil
 
+---@internal
 ---`M.save` without what comes after it. `on_tree` is handed what the tree showed before the wipe
 ---closed it (nil: no tree).
 ---@param name string|nil
