@@ -51,6 +51,11 @@ return {
       timeout = 5000,
       note = "the tree follows the file in the editor: its cursor line is on a.txt (it gets there a moment later)",
     },
+    {
+      wait = [[_G.tree_steady(600)]],
+      timeout = 8000,
+      note = "the tree has drawn the same for a while: its decorators come debounced, after the rows",
+    },
     { screen = "git-before-quit", masks = TREE_ONLY },
     {
       lua = [[_G.kept("open", _G.tree.get_open_nodes("git")); _G.to_editor()]],
@@ -82,6 +87,11 @@ return {
       wait = [[vim.api.nvim_win_get_cursor(_G.tree.get_winid())[1] == _G.tree_line("a.txt")]],
       timeout = 5000,
       note = "the tree follows the file in the editor: its cursor line is on a.txt (it gets there a moment later)",
+    },
+    {
+      wait = [[_G.tree_steady(600)]],
+      timeout = 8000,
+      note = "the tree has drawn the same for a while: its decorators come debounced, after the rows",
     },
     { screen = "git-after-restart", masks = TREE_ONLY },
   },

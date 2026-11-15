@@ -51,6 +51,11 @@ return {
     { keys = "h", note = "close it" },
     { wait = [[_G.tree_line("c.txt") == nil]], note = "its file is gone from the tree" },
     { expect = [[_G.tree_line("a.txt") ~= nil]], note = "the changed file is still shown" },
+    {
+      wait = [[_G.tree_steady(600)]],
+      timeout = 8000,
+      note = "the tree has drawn the same for a while: its decorators come debounced, after the rows",
+    },
     { screen = "group-closed", masks = TREE_ONLY },
     {
       lua = [[_G.kept("open", _G.tree.get_open_nodes("git")); _G.to_editor()]],
@@ -82,6 +87,11 @@ return {
     {
       expect = [[_G.tree_line("c.txt") == nil]],
       note = "the group closed by hand is still closed",
+    },
+    {
+      wait = [[_G.tree_steady(600)]],
+      timeout = 8000,
+      note = "the tree has drawn the same for a while: its decorators come debounced, after the rows",
     },
     { screen = "group-closed-after-restart", masks = TREE_ONLY },
   },

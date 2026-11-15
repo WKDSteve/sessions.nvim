@@ -63,6 +63,11 @@ return {
     },
     { keys = "ll", note = "down to the describe, and open that too" },
     { wait = [[_G.tree_line("adds") ~= nil]], note = "its cases are listed" },
+    {
+      wait = [[_G.tree_steady(600)]],
+      timeout = 8000,
+      note = "the tree has drawn the same for a while: its decorators come debounced, after the rows",
+    },
     { screen = "tests-before-quit", masks = TREE_ONLY },
     {
       lua = [[_G.kept("open", _G.tree.get_open_nodes("tests")); _G.to_editor()]],
@@ -93,6 +98,11 @@ return {
       expect = [[vim.api.nvim_get_current_win() ~= _G.tree.get_winid()]],
       note = "the focus is in the editor, not in the tree",
     },
+    {
+      wait = [[_G.tree_steady(600)]],
+      timeout = 8000,
+      note = "the tree has drawn the same for a while: its decorators come debounced, after the rows",
+    },
     { screen = "tests-after-restart", masks = TREE_ONLY },
     {
       restart = true,
@@ -122,6 +132,11 @@ return {
       wait = [[vim.deep_equal(_G.tree.get_open_nodes("tests"), _G.kept("open"))]],
       timeout = 5000,
       note = "the nodes the session named are open in the view that came late",
+    },
+    {
+      wait = [[_G.tree_steady(600)]],
+      timeout = 8000,
+      note = "the tree has drawn the same for a while: its decorators come debounced, after the rows",
     },
     { screen = "tests-registered-late", masks = TREE_ONLY },
   },

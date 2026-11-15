@@ -56,6 +56,11 @@ return {
       expect = [[_G.same(_G.tree.get_open_nodes("buffers"), {})]],
       note = "nothing is open in the view",
     },
+    {
+      wait = [[_G.tree_steady(600)]],
+      timeout = 8000,
+      note = "the tree has drawn the same for a while: its decorators come debounced, after the rows",
+    },
     { screen = "buffers-closed", masks = TREE_ONLY },
     { keys = ":Filetree source files<CR>", note = "over to the files: the buffers are hidden now" },
     { wait = [[_G.tree.get_view() == "files" and _G.tree_line("docs") ~= nil]], timeout = 10000 },
@@ -82,6 +87,11 @@ return {
       timeout = 5000,
       note = "the tree follows the file in the editor: its cursor line is on b.txt (it gets there a moment later)",
     },
+    {
+      wait = [[_G.tree_steady(600)]],
+      timeout = 8000,
+      note = "the tree has drawn the same for a while: its decorators come debounced, after the rows",
+    },
     { screen = "files-after-restart", masks = TREE_ONLY },
     { keys = ":Filetree source buffers<CR>", note = "show the buffers again" },
     {
@@ -94,6 +104,11 @@ return {
     },
     { expect = [[_G.tree_line("a.txt") == nil]], note = "the head is still closed" },
     { expect = [[_G.same(_G.tree.get_open_nodes("buffers"), {})]] },
+    {
+      wait = [[_G.tree_steady(600)]],
+      timeout = 8000,
+      note = "the tree has drawn the same for a while: its decorators come debounced, after the rows",
+    },
     { screen = "buffers-after-restart", masks = TREE_ONLY },
   },
   judge = {
