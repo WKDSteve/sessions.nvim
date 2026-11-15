@@ -672,6 +672,35 @@ return function(H)
     H.eq(#calls, 0, "and so does the exit snapshot")
     H.ok(json.read(root .. "/.withtree.tree.json"), "both still write the sidecar")
 
+    -- the exit as it happens: the autosave of the workspace wipes the tree, the snapshot `last` follows
+    -- at once and finds no tree window. It is the editor as it was quit: the tree is in it.
+    open_tree_window()
+    tree.view = "buffers"
+    H.ok(core.save("withtree", { autosave = true }))
+    H.falsy(api.nvim_buf_is_valid(tree_buf), "fixture: the autosave wiped the tree buffer")
+    H.ok(core.save("last", { snapshot = true }))
+    local last = json.read(root .. "/.last.tree.json")
+    H.ok(last, "the exit snapshot keeps the tree the autosave before it closed")
+    H.eq(last and last.view, "buffers", "as it was when the editor was quit")
+    H.eq(#calls, 0, "and neither of the two shows the tree again")
+    -- only the save right after the autosave: a later snapshot without a tree has none
+    H.ok(core.save("last", { snapshot = true }))
+    H.eq(
+      vim.fn.filereadable(root .. "/.last.tree.json"),
+      0,
+      "a later snapshot without a tree has none"
+    )
+    H.ok(core.save("withtree", { autosave = true }))
+    H.ok(core.save("withtree"))
+    H.ok(core.save("last", { snapshot = true }))
+    H.eq(
+      vim.fn.filereadable(root .. "/.last.tree.json"),
+      0,
+      "a save in between forgets what the autosave saw"
+    )
+    core.delete("last")
+    tree.view = "git"
+
     -- a save that gives up early has closed the tree just the same: it comes back too
     open_tree_window()
     local blocked = H.fail_json_writes({ ".withtree.tree.json" })

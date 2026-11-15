@@ -213,7 +213,9 @@ tree and comes back as it is drawn.
 
 A save in the middle of work closes the tree as well (it is one of the `nofile`
 buffers the clean save wipes); sessions.nvim shows it again at once, as it was.
-Only the save on the way out leaves it closed.
+Only the save on the way out leaves it closed. Two saves follow each other
+there, the autosave of the workspace and the snapshot `last`; both carry the
+tree as it was when the editor was quit, so `:LastSession` brings it back too.
 
 A tree that is closed at the time of the save writes no sidecar, and removes
 the one of an earlier save: the next load leaves the tree alone. The window

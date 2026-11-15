@@ -557,6 +557,11 @@ end
 -- =========================================================
 
 ---@internal
+---@internal
+---What the tree showed when the exit autosave closed it, for the exit snapshot that follows it.
+---@type Sessions.TreeState|nil
+local exit_tree_state = nil
+
 ---`M.save` without what comes after it. `on_tree` is handed what the tree showed before the wipe
 ---closed it (nil: no tree).
 ---@param name string|nil
@@ -575,6 +580,16 @@ local function save_session(name, opts, on_tree)
   end
   -- Before the wipe: the tree buffer is `nofile`, one of the buffers the wipe closes.
   local tree_state = cfg.restore_tree and require("sessions.treeview").capture() or nil
+  -- On the way out two saves follow each other: the autosave, whose wipe closes the tree, then the
+  -- snapshot `last`, which finds no tree any more. The snapshot is the editor as it was quit, so it
+  -- takes what the autosave saw. Only the very next save may: any other one forgets it.
+  local from_autosave = exit_tree_state
+  exit_tree_state = nil
+  if snapshot and tree_state == nil and cfg.restore_tree then
+    tree_state = from_autosave
+  elseif opts and opts.autosave then
+    exit_tree_state = tree_state
+  end
   on_tree(tree_state)
   wipe_blacklisted()
   local stale = wipe_stale()
