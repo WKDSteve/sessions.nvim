@@ -111,6 +111,12 @@ return {
     docs = "docs/FEATURES.md",
   },
   {
+    id = "sessions.tree",
+    title = "A session brings the file tree back: its root, the view on screen, the open folders and the open nodes of the views",
+    surface = { "config:restore_tree" },
+    docs = "docs/FEATURES.md",
+  },
+  {
     id = "sessions.tabline",
     title = "The order of a tabline's buffers and the pinned buffers of each tab come back with the session",
     docs = "docs/FEATURES.md",

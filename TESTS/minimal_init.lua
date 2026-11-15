@@ -14,13 +14,15 @@
 local this = vim.fn.fnamemodify(debug.getinfo(1, "S").source:sub(2), ":p")
 local root = vim.fs.dirname(vim.fs.dirname(vim.fs.normalize(this)))
 
-local DEPS = { "testing.nvim", "lib.nvim", "ui.nvim" }
+local DEPS = { "testing.nvim", "lib.nvim", "ui.nvim", "filetree.nvim" }
 
 -- Found like the others (`ci commit` hands it over as $UI_NVIM_DIR because it is named above), but left off the
 -- runtimepath: the specs stand up their own `ui.kit` doubles and expect none otherwise. The test sheets press the real
 -- chip and dialogs and add it themselves (TESTS/sheets/_helpers.lua, vim.g.sessions_sheets_ui_nvim).
+-- filetree.nvim the same way (vim.g.sessions_sheets_filetree_nvim): the sheets of the tree in a session drive its own
+-- tree for real; the specs know it as a fake only.
 ---@type table<string, true>
-local SHEETS_ONLY = { ["ui.nvim"] = true }
+local SHEETS_ONLY = { ["ui.nvim"] = true, ["filetree.nvim"] = true }
 
 ---@type table<string, string>
 local MARKERS = { ["lib.nvim"] = "lua/lib/nvim", ["testing.nvim"] = "lua/testing" }
@@ -91,5 +93,6 @@ for _, name in ipairs(DEPS) do
   end
 end
 vim.g.sessions_sheets_ui_nvim = found["ui.nvim"]
+vim.g.sessions_sheets_filetree_nvim = found["filetree.nvim"]
 
 return { root = root, deps = found }

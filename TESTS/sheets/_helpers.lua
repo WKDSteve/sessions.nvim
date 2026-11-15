@@ -5,6 +5,8 @@
 -- Nothing here touches a real session directory: the store and every project live below `vim.fn.tempname()`, inside
 -- the sandbox of the child editor (its `stdpath` directories are sandboxed too).
 
+local M = {}
+
 _G.ROOT = vim.fs.normalize(vim.fn.getcwd())
 
 -- Fixes the editor's temp directory before $TEMP goes away below.
@@ -266,3 +268,128 @@ function _G.finish()
     end,
   })
 end
+
+---Put the named sibling plugins on the runtimepath; false when one was not found. For `requires`, and again in the
+---`args` of a `restart` (a new editor has a new runtimepath). Where they are is TESTS/minimal_init.lua's finding
+---($<NAME>_DIR, .deps/<name> of the CI's checkouts, ../<name>, the lazy.nvim directory), left in
+---`vim.g.sessions_sheets_<name>`.
+---@param ... string  "ui.nvim", "filetree.nvim"
+---@return boolean
+function M.add_deps(...)
+  for _, name in ipairs({ ... }) do
+    local dir = vim.g["sessions_sheets_" .. name:gsub("%W", "_")]
+    if type(dir) ~= "string" or vim.fn.isdirectory(dir .. "/lua") ~= 1 then
+      return false
+    end
+    vim.opt.rtp:append(dir)
+  end
+  return true
+end
+
+---The own tree of filetree.nvim (`adapter = "native"`), set up as a person would; `_G.tree` is its adapter. Without
+---icons (no Nerd Font in a snapshot) and without filetree.nvim's own per-project session store: the named session
+---is the one place here.
+---@param opts table|nil  merged over the setup table
+function _G.tree_setup(opts)
+  vim.g.have_nerd_font = false
+  require("filetree").setup(vim.tbl_deep_extend("force", {
+    adapter = "native",
+    deps_popup = false,
+    native = { width = 30 },
+    features = { session = { enabled = false }, close_on_open = { enabled = false } },
+  }, opts or {}))
+  _G.tree = require("filetree").adapter()
+end
+
+---Every editor of a sheet about the tree in a session starts with this (the first step, and the `+lua` of a
+---`restart`): ui.nvim and filetree.nvim on the runtimepath, store and projects below `stdpath("data")`, no
+---statusline (it would name a temporary path), the own tree and sessions.nvim set up.
+---@param opts { tests: boolean|nil }|nil  `tests`: testing.nvim registers its view `tests` (as its setup does)
+function M.tree_boot(opts)
+  assert(M.add_deps("ui.nvim", "filetree.nvim"), "ui.nvim or filetree.nvim is gone")
+  _G.persistent()
+  vim.o.laststatus = 0
+  vim.o.ruler = false
+  _G.tree_setup()
+  if opts and opts.tests then
+    _G.tests_view()
+  end
+  _G.setup({ chip = { enable = false } })
+end
+
+---testing.nvim registers its view `tests` at the tree, as its setup does in a real config.
+function _G.tests_view()
+  vim.env.TESTING_TRUST = "1"
+  assert(require("testing.integrations.tree").register(), "no tree registry in lib.nvim")
+end
+
+---The lines of the tree buffer ({} without a tree window).
+---@return string[]
+function _G.tree_lines()
+  local buf = _G.tree and _G.tree.is_open() and _G.tree.get_bufnr() or nil
+  return buf and vim.api.nvim_buf_get_lines(buf, 0, -1, false) or {}
+end
+
+---The 1-based line of the tree that holds `text` (plain), or nil.
+---@param text string
+---@return integer|nil
+function _G.tree_line(text)
+  for i, line in ipairs(_G.tree_lines()) do
+    if line:find(text, 1, true) then
+      return i
+    end
+  end
+  return nil
+end
+
+---Go into the tree window, the cursor on the line that holds `text`: where a person puts it before a key.
+---@param text string
+function _G.tree_on(text)
+  local line = _G.tree_line(text)
+  if not line then
+    error(
+      ("the tree shows no %s: %s"):format(vim.inspect(text), table.concat(_G.tree_lines(), " | ")),
+      0
+    )
+  end
+  vim.api.nvim_set_current_win(_G.tree.get_winid())
+  vim.api.nvim_win_set_cursor(0, { line, 0 })
+end
+
+---Leave the tree for the first window that is not the tree's: where a person is when they quit.
+function _G.to_editor()
+  for _, w in ipairs(_G.wins()) do
+    if w ~= _G.tree.get_winid() then
+      vim.api.nvim_set_current_win(w)
+      return
+    end
+  end
+  error("no editor window", 0)
+end
+
+---`got` equals `want` (deep), or an error that shows both (the failure line of the sheet names them).
+---@param got any
+---@param want any
+---@return boolean
+function _G.same(got, want)
+  if not vim.deep_equal(got, want) then
+    error(("got %s, wanted %s"):format(vim.inspect(got), vim.inspect(want)), 0)
+  end
+  return true
+end
+
+---Keep `value` for the editor after a `restart` (below `stdpath("data")`, see `_G.persistent`), or read it back.
+---@param name string
+---@param value any|nil  nil: read
+---@return any
+function _G.kept(name, value)
+  local path = vim.fn.stdpath("data") .. "/sheet/kept-" .. name .. ".json"
+  if value == nil then
+    return vim.json.decode(vim.fn.readfile(path)[1]).value
+  end
+  vim.fn.mkdir(vim.fs.dirname(path), "p")
+  vim.fn.writefile({ vim.json.encode({ value = value }) }, path)
+  return value
+end
+
+return M

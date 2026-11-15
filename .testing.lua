@@ -19,7 +19,8 @@ return {
   isolated = "file",
   -- Environment variables the specs read; a child editor inherits an allowlist only (never secrets).
   -- UI_NVIM_DIR: the way ui.nvim reaches the children from the worktree of `ci commit`, where it is no sibling.
-  env_allow = { "LIB_NVIM_DIR", "UI_NVIM_DIR" },
+  -- FILETREE_NVIM_DIR: the same for filetree.nvim, whose own tree the sheets of `sessions.tree` drive.
+  env_allow = { "LIB_NVIM_DIR", "UI_NVIM_DIR", "FILETREE_NVIM_DIR" },
   -- All test sheets run in one spec file, one child editor each: the defaults of 10 s per case and 60 s per file
   -- are reached under load (fileops, 2026-11-07).
   timeouts = { case_ms = 30000, file_ms = 300000 },
@@ -67,6 +68,11 @@ return {
           repo = "WKDSteve/ui.nvim",
           ref = "ci-verified",
           why = "The corner chip, the dialogs and the kit marks menu are what the test sheets press, for real.",
+        },
+        {
+          repo = "WKDSteve/filetree.nvim",
+          ref = "ci-verified",
+          why = "The test sheets of sessions.tree quit and restart an editor with its own tree, for real.",
         },
       },
     },
