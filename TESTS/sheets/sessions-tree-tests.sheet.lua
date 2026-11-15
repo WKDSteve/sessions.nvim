@@ -3,7 +3,7 @@
 --   1. with testing.nvim set up before the session loads: the tree is back on `tests` with the same nodes open;
 --   2. with testing.nvim set up only AFTER the session loaded (a plugin a plugin manager loads late): the tree shows
 --      the files meanwhile, and once the view is there and shown, the nodes the session named are open in it.
--- The hand probe this replaces: filetree.nvim/native-views-handprobe ("Sitzungen: offene Knoten der Ansicht tests,
+-- Acceptance: sessions.nvim/abnahme-own-tree-open-nodes-in-a-session; it replaces the hand probe ("Sitzungen: offene Knoten der Ansicht tests,
 -- eine Ansicht eines Plugins, das sich verzögert anmeldet"). filetree.nvim and ui.nvim come from .deps/ (CI:
 -- ci.workflow.checkouts in .testing.lua) or beside this repository; without them the sheet is a reported skip.
 -- A picture of the tree alone: the editor beside it shows a toast that names a temporary path, and the command line
@@ -20,7 +20,7 @@ return {
   id = "sessions.tree-tests",
   feature = "sessions.tree",
   title = "sessions.nvim: the open nodes of the view tests come back, also when its plugin registers after the load",
-  task = "filetree.nvim/native-views-handprobe",
+  task = "sessions.nvim/abnahme-own-tree-open-nodes-in-a-session",
   sizes = { { rows = 24, cols = 100 } },
   requires = {
     {

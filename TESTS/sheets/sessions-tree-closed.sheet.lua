@@ -2,7 +2,7 @@
 -- filetree.nvim shows the buffers with their head closed by hand, then the files; the editor is quit with the files
 -- on screen and the buffers hidden. After `+LastSession` the tree is back on the files with the folder that was open,
 -- and the buffers, shown again, still have everything closed (a view that is drawn for the first time opens its head).
--- The hand probe this replaces: filetree.nvim/native-views-handprobe ("eine Ansicht, in der alles zugeklappt war").
+-- Acceptance: sessions.nvim/abnahme-own-tree-open-nodes-in-a-session; it replaces the hand probe ("eine Ansicht, in der alles zugeklappt war").
 -- filetree.nvim and ui.nvim come from .deps/ (CI: ci.workflow.checkouts in .testing.lua) or beside this repository;
 -- without them the sheet is a reported skip (n/a) on a developer's machine and red on CI.
 
@@ -20,7 +20,7 @@ return {
   id = "sessions.tree-closed",
   feature = "sessions.tree",
   title = "sessions.nvim: a view of the tree with everything closed, hidden at the quit, comes back closed",
-  task = "filetree.nvim/native-views-handprobe",
+  task = "sessions.nvim/abnahme-own-tree-open-nodes-in-a-session",
   sizes = { { rows = 24, cols = 100 } },
   requires = {
     {

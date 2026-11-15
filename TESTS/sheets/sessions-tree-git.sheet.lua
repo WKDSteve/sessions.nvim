@@ -1,7 +1,7 @@
 -- Feature sessions.tree (TESTS/sheets/features.lua): the own tree of filetree.nvim shows the view `git` of a project
 -- with a changed and a new file. The editor is quit and started again with `+LastSession`: the tree is back in that
 -- view, with the same groups open, and the focus is in the editor.
--- The hand probe this replaces: filetree.nvim/native-views-handprobe ("Sitzungen: offene Knoten der Ansicht git").
+-- Acceptance: sessions.nvim/abnahme-own-tree-open-nodes-in-a-session; it replaces the hand probe ("Sitzungen: offene Knoten der Ansicht git").
 -- filetree.nvim and ui.nvim come from .deps/ (CI: ci.workflow.checkouts in .testing.lua) or beside this repository;
 -- without them the sheet is a reported skip (n/a) on a developer's machine and red on CI.
 
@@ -19,7 +19,7 @@ return {
   id = "sessions.tree-git",
   feature = "sessions.tree",
   title = "sessions.nvim: quit with the tree on the view git, +LastSession brings the tree back on it",
-  task = "filetree.nvim/native-views-handprobe",
+  task = "sessions.nvim/abnahme-own-tree-open-nodes-in-a-session",
   sizes = { { rows = 24, cols = 100 } },
   requires = {
     {
