@@ -15,7 +15,9 @@
 --- when the adapter has them, else the feature `source_switcher` (`current` / `switch`), else the
 --- buffer variable `filetree_view` (read only). What is open in a view of other sources (the groups of
 --- the buffers, of git, of the tests) goes through `adapter.get_open_nodes` / `adapter.set_open_nodes`,
---- when the adapter has both; an older filetree.nvim has neither, and the field is left out.
+--- when the adapter has both; an older filetree.nvim has neither, and the field is left out. An
+--- adapter that also has `knows_open_nodes` tells a view nothing is known of (nil) from one with
+--- everything closed (an empty list): then every list is kept, also an empty one.
 ---
 --- One place per session: filetree.nvim's own `session` feature keeps root and open folders per
 --- PROJECT and knows nothing of the view. Before it restores, this module tells that feature to step
@@ -147,12 +149,24 @@ local function current_view(filetree, adapter)
 end
 
 ---@internal
+---The names of the views whose open nodes the last restore set. A view nobody registered yet (its
+---plugin is set up later) is not among the views of the tree, but the tree keeps what was set for it:
+---the next save asks for these names too, so their open nodes are not lost by saving before that
+---plugin came.
+---@type table<string, true>
+local restored_names = {}
+
+---@internal
 ---The open nodes of the views of other sources, or nil when the tree cannot say (an older
----filetree.nvim) or nothing is open anywhere.
+---filetree.nvim) or there is nothing to keep.
 ---
----A view that was never shown answers an empty list, the same as one where everything was closed by
----hand. Setting an empty list closes the heads a view opens by itself, so an empty list is kept only
----for the view on screen (that one was shown, for sure); the others come back as the tree draws them.
+---An adapter with `knows_open_nodes` answers nil for a view nothing is known of (never shown,
+---nothing set) and a list for the others, also an empty one: everything closed. Exactly the lists are
+---kept.
+---
+---An adapter without it answers an empty list for a view that was never shown as well. Setting an
+---empty list closes the heads a view opens by itself, so there an empty list is kept only for the
+---view on screen (that one was shown, for sure); the others come back as the tree draws them.
 ---@param adapter table
 ---@param on_screen string|nil
 ---@return table<string, (string|number)[]>|nil
@@ -161,6 +175,7 @@ local function open_nodes_of(adapter, on_screen)
   if type(adapter.get_open_nodes) ~= "function" or type(adapter.set_open_nodes) ~= "function" then
     return nil
   end
+  local tells_unknown = type(adapter.knows_open_nodes) == "function"
   local names, seen = {}, {}
   ---@param name any
   local function add(name)
@@ -180,12 +195,19 @@ local function open_nodes_of(adapter, on_screen)
       end
     end
   end
+  if tells_unknown then
+    local kept = vim.tbl_keys(restored_names)
+    table.sort(kept)
+    for _, name in ipairs(kept) do
+      add(name)
+    end
+  end
   local out, any = {}, false
   for _, name in ipairs(names) do
     local ok, ids = pcall(adapter.get_open_nodes, name)
     if ok and type(ids) == "table" then
       local clean = clean_ids(ids)
-      if #clean > 0 or name == on_screen then
+      if tells_unknown or #clean > 0 or name == on_screen then
         out[name] = clean
         any = true
       end
@@ -341,12 +363,18 @@ function M.apply(state)
     pcall(adapter.expand_paths, state.expanded)
   end
   -- before the view is shown: a view that is not on screen yet takes its open nodes over when it is,
-  -- and is drawn once. A view nobody has any more (its plugin is gone) is refused by name.
+  -- and is drawn once. A view nobody registered (yet) is kept by a tree that can, for the plugin that
+  -- is set up later, and refused by name by an older one.
   if state.open_nodes and type(adapter.set_open_nodes) == "function" then
     local names = vim.tbl_keys(state.open_nodes)
     table.sort(names)
+    restored_names = {}
     for _, name in ipairs(names) do
-      pcall(adapter.set_open_nodes, name, state.open_nodes[name])
+      -- true also for a view nobody registered yet, with a tree that keeps the ids for it
+      local set_ok, kept = pcall(adapter.set_open_nodes, name, state.open_nodes[name])
+      if set_ok and kept == true then
+        restored_names[name] = true
+      end
     end
   end
   if state.view and state.view ~= "files" then

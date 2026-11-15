@@ -195,11 +195,21 @@ back after the load:
 The open nodes of the other views need a filetree.nvim that has
 `get_open_nodes` / `set_open_nodes` on its adapter; with an older one the
 field is left out of the sidecar and those views come back as the tree draws
-them. A view with nothing open is only saved when it is the one on screen: a
-view that was never shown answers the same as one where everything was closed
-by hand, and closing everything in a view nobody touched would be wrong. A
+them.
+
+With a filetree.nvim that also has `knows_open_nodes`, the tree tells a view
+nothing is known of (never shown, nothing set) from one where everything was
+closed by hand: the first is left out, the second is saved as an empty list
+and comes back closed, on screen or not. Such a tree also keeps what the
+session names for a view nobody registered yet, for the plugin that is set up
+after the load, and a save before that plugin came keeps those nodes in the
+session.
+
+A filetree.nvim without `knows_open_nodes` answers an empty list in both
+cases. There a view with nothing open is only saved when it is the one on
+screen (closing everything in a view nobody touched would be wrong), and a
 view whose plugin is not set up yet at the time of the load is refused by the
-tree, and comes back as it is drawn.
+tree and comes back as it is drawn.
 
 A save in the middle of work closes the tree as well (it is one of the `nofile`
 buffers the clean save wipes); sessions.nvim shows it again at once, as it was.

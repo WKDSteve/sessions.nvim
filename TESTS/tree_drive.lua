@@ -243,6 +243,63 @@ else
     {}
   )
   T.eq("neither the saves nor the loads said anything at warning level", T.loud(mark), {})
+
+  -- A tree that tells "nothing known" from "everything closed": an empty list of a view that is
+  -- not on screen is kept, and so is what a session set for a view nobody registered yet.
+  if type(T.adapter.knows_open_nodes) ~= "function" then
+    T.na("this filetree.nvim has no knows_open_nodes: the empty list of a hidden view was not run")
+  else
+    mark = T.mark()
+    T.ok("fixture: the files are on screen, the buffers hidden", (T.adapter.show_view("files")))
+    T.eq("fixture: the hidden view has everything closed", T.adapter.get_open_nodes("buffers"), {})
+    to_editor()
+    T.ok("the session is saved with the files on screen", (sessions.save("hidden")))
+    local hidden_json = scratch .. "/sessions/.hidden.tree.json"
+    state = vim.json.decode(table.concat(vim.fn.readfile(hidden_json), "\n"))
+    T.eq("the sidecar keeps the empty list of the hidden view", state.open_nodes.buffers, {})
+    T.eq(
+      "... and nothing for a view nothing is known of",
+      vim.tbl_keys(state.open_nodes),
+      { "buffers" }
+    )
+
+    -- the session as another editor wrote it, one that had a plugin with a view `later`
+    state.open_nodes.later = { "x" }
+    vim.fn.writefile({ vim.json.encode(state) }, hidden_json)
+    T.ok("fixture: the nodes open again", (T.adapter.set_open_nodes("buffers", open_nodes)))
+    T.adapter.close()
+    T.ok("the session is loaded", (sessions.load("hidden")))
+    T.ok(
+      "the tree is open again, on the files",
+      T.wait(function()
+        return T.adapter.is_open() and T.adapter.get_view() == "files"
+      end)
+    )
+    T.eq("the hidden view has everything closed again", T.adapter.get_open_nodes("buffers"), {})
+    T.eq(
+      "the tree keeps the ids of the view that is not there",
+      T.adapter.get_open_nodes("later"),
+      { "x" }
+    )
+
+    -- saved again before that plugin came: its open nodes stay in the session
+    to_editor()
+    T.ok("the session is saved again", (sessions.save("hidden")))
+    state = vim.json.decode(table.concat(vim.fn.readfile(hidden_json), "\n"))
+    T.eq("the sidecar still names the view that is not there", state.open_nodes.later, { "x" })
+    T.eq("... and the hidden one", state.open_nodes.buffers, {})
+
+    T.ok("fixture: the buffers are shown", (T.adapter.show_view("buffers")))
+    T.eq(
+      "... and stay closed once they are drawn",
+      (function()
+        T.settle(200)
+        return T.adapter.get_open_nodes("buffers")
+      end)(),
+      {}
+    )
+    T.eq("neither the saves nor the load said anything at warning level", T.loud(mark), {})
+  end
 end
 
 T.eq("no dialog nobody expected", T.unanswered, 0)

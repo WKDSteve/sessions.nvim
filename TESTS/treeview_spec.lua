@@ -334,6 +334,93 @@ return function(H)
   end
 
   do
+    -- An adapter with `knows_open_nodes` tells "nothing known" (nil) from "everything closed" (an
+    -- empty list): every list is kept, also an empty one of a view that is not on screen.
+    local open = { git = { "git:staged" }, buffers = {}, tests = nil }
+    local extra, set, restore_native = fake_open_nodes(open, { "files", "buffers", "git", "tests" })
+    extra.knows_open_nodes = function(name)
+      return open[name] ~= nil
+    end
+    local tree, _, restore = fake_filetree(extra)
+    local state = treeview.capture()
+    H.eq(
+      vim.inspect(state.open_nodes),
+      vim.inspect({ buffers = {}, git = { "git:staged" } }),
+      "an empty list is everything closed, and kept; a view nothing is known of is left out"
+    )
+
+    -- The session also names a view nobody registered yet (its plugin is set up later): the tree
+    -- keeps the ids for it, and the next save asks for them although no view carries the name.
+    H.ok(treeview.save(session, state))
+    local data = json.read(sidecar)
+    data.open_nodes.later = { "later:a" }
+    json.write(sidecar, data)
+    tree.open = false
+    H.ok(treeview.restore(session))
+    local names = {}
+    for _, call in ipairs(set) do
+      names[#names + 1] = call.name
+    end
+    H.eq(
+      table.concat(names, " "),
+      "buffers git later show git",
+      "every stored view is set, also the one that is not there yet"
+    )
+    open.later = { "later:a" } -- what the tree answers for the name it keeps
+    H.eq(
+      vim.inspect(treeview.capture().open_nodes),
+      vim.inspect({ buffers = {}, git = { "git:staged" }, later = { "later:a" } }),
+      "a save before that plugin came keeps its open nodes"
+    )
+
+    -- another session is restored: the names of the one before are not carried into it
+    json.write(
+      sidecar,
+      { adapter = "native", view = "git", expanded = {}, open_nodes = { git = {} } }
+    )
+    tree.open = false
+    H.ok(treeview.restore(session))
+    H.eq(
+      treeview.capture().open_nodes.later,
+      nil,
+      "what a session before this one set for a missing view is not saved into this one"
+    )
+    restore()
+    restore_native()
+
+    -- a tree that refuses a name nobody has (an older one, without knows_open_nodes): not asked again
+    local asked = {}
+    local old = { git = { "git:staged" } }
+    local _, _, restore_old = fake_filetree({
+      get_open_nodes = function(name)
+        asked[#asked + 1] = name
+        return old[name]
+      end,
+      set_open_nodes = function(name)
+        return old[name] ~= nil
+      end,
+      show_view = function()
+        return true
+      end,
+    })
+    json.write(sidecar, {
+      adapter = "native",
+      view = "git",
+      expanded = {},
+      open_nodes = { git = { "git:staged" }, later = { "later:a" } },
+    })
+    H.ok(treeview.restore(session))
+    asked = {}
+    treeview.capture()
+    H.eq(
+      table.concat(asked, " "),
+      "git",
+      "only the view on screen and the views of the tree are asked"
+    )
+    restore_old()
+  end
+
+  do
     -- without the list of views (the module is not there): the view on screen is asked all the same
     local extra, _, restore_native =
       fake_open_nodes({ git = { "git:staged" }, tests = { "t" } }, false)
