@@ -546,6 +546,42 @@ return function(H)
     setup()
   end
 
+  -- -------- the same, in a window pinned to its buffer (`winfixbuf`: a file tree)
+
+  if vim.fn.exists("+winfixbuf") == 1 then
+    -- A file tree pins its window to its buffer. When that window is the only one left in the tab
+    -- it becomes an ordinary window on another buffer, and the pin must go with the tree buffer:
+    -- a window that kept it refuses every `:edit` (E1513), and `nvim_win_set_buf` refuses the
+    -- redirect itself.
+    setup({ blacklist = { buftypes = { "nofile" } } })
+
+    local keeper = dir .. "/fixbuf-keep.lua"
+    vim.fn.writefile({ "-- keep" }, keeper)
+    local kept_buf = vim.fn.bufadd(keeper)
+    vim.fn.bufload(kept_buf)
+    vim.bo[kept_buf].buflisted = true
+    api.nvim_set_current_buf(kept_buf)
+
+    vim.cmd("tabnew")
+    local lone_win = api.nvim_get_current_win()
+    local lone_buf = api.nvim_create_buf(false, true)
+    vim.bo[lone_buf].buftype = "nofile"
+    api.nvim_win_set_buf(lone_win, lone_buf)
+    vim.wo[lone_win].winfixbuf = true
+
+    H.ok(core.save("fixbuf"))
+
+    H.falsy(api.nvim_buf_is_valid(lone_buf), "the pinned buffer is wiped")
+    H.ok(api.nvim_win_is_valid(lone_win), "the tab's only window survives")
+    H.eq(api.nvim_win_get_buf(lone_win), kept_buf, "redirected to another real buffer")
+    H.eq(vim.wo[lone_win].winfixbuf, false, "and no longer pinned to a buffer")
+
+    core.delete("fixbuf")
+    vim.cmd("tabclose")
+    api.nvim_buf_delete(kept_buf, { force = true })
+    setup()
+  end
+
   -- ------ blacklisted buffer, last window in its tab, no alternate anywhere
 
   do

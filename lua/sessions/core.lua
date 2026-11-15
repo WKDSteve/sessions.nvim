@@ -289,6 +289,11 @@ local function switch_windows_off(bufnr)
     then
       if only_window_in_tab(win) then
         local alt = find_alt_buffer(bufnr) or api.nvim_create_buf(true, false)
+        -- A window pinned to its buffer (`winfixbuf`: a file tree, a panel) refuses the redirect
+        -- (E1513), and the delete that follows then closes it after all, or leaves a window no
+        -- `:edit` works in. It becomes an ordinary window here: the pin goes with its buffer.
+        -- pcall: the option is younger than the oldest Neovim this runs on.
+        pcall(api.nvim_set_option_value, "winfixbuf", false, { win = win })
         pcall(api.nvim_win_set_buf, win, alt)
       else
         pcall(api.nvim_win_close, win, true)

@@ -75,7 +75,9 @@ sidebar (nvim-tree, neo-tree, etc. — `buftype=nofile` by default) still
 open in a split is closed along with its buffer, rather than left behind
 showing some unrelated real buffer; only when it is the tab's one
 remaining window (closing it isn't possible) does it get redirected onto
-another real buffer instead.
+another real buffer instead. A window that was pinned to the sidebar's
+buffer (`winfixbuf`) loses the pin then: it is an ordinary window from there
+on.
 
 - **Config:** `opts.blacklist.{buftypes,filetypes,paths}`
 
