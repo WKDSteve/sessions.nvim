@@ -233,6 +233,235 @@ return function(H)
     restore()
   end
 
+  -- the open nodes of the views of other sources ---------------------------------
+
+  ---A fake of the adapter's `get_open_nodes` / `set_open_nodes` and of `filetree.native.views`.
+  ---@param open table<string, any>  what each view has open
+  ---@param views string[]|false     the names `views()` answers; false: the module is not loaded
+  ---@return table extra, table[] set, fun() restore
+  local function fake_open_nodes(open, views)
+    local set = {}
+    local extra = {
+      get_open_nodes = function(name)
+        return open[name]
+      end,
+      set_open_nodes = function(name, ids)
+        set[#set + 1] = { name = name, ids = ids }
+        return true
+      end,
+      show_view = function(name)
+        set[#set + 1] = { name = "show " .. name }
+        return true
+      end,
+    }
+    local specs = {}
+    for _, name in ipairs(views or {}) do
+      specs[#specs + 1] = { name = name, sources = { name } }
+    end
+    local restore = H.stub("filetree.native", views and {
+      views = function()
+        return specs
+      end,
+    } or nil)
+    return extra, set, restore
+  end
+
+  do
+    local extra, set, restore_native = fake_open_nodes({
+      git = { "git:staged", "git:staged:lua", 7 },
+      buffers = {},
+      tests = { "tests:suite" },
+      gone = nil,
+    }, { "files", "buffers", "git", "tests", "gone" })
+    local tree, _, restore = fake_filetree(extra)
+    local state = treeview.capture()
+    H.eq(vim.inspect(state.open_nodes.git), vim.inspect({ "git:staged", "git:staged:lua", 7 }))
+    H.eq(vim.inspect(state.open_nodes.tests), vim.inspect({ "tests:suite" }))
+    H.eq(
+      state.open_nodes.buffers,
+      nil,
+      "a view with nothing open is left out: one that was never shown answers the same"
+    )
+    H.eq(state.open_nodes.files, nil, "the files have their open folders")
+    H.eq(state.open_nodes.gone, nil, "a view the tree has no answer for is left out")
+
+    H.ok(treeview.save(session, state))
+    local data = json.read(sidecar)
+    H.eq(vim.inspect(data.open_nodes.git), vim.inspect({ "git:staged", "git:staged:lua", 7 }))
+
+    tree.open = false
+    H.ok(treeview.restore(session))
+    H.eq(#set, 3)
+    H.eq(set[1].name, "git", "the views in a fixed order")
+    H.eq(vim.inspect(set[1].ids), vim.inspect({ "git:staged", "git:staged:lua", 7 }))
+    H.eq(set[2].name, "tests")
+    H.eq(set[3].name, "show git", "and the view is shown after its open nodes were set")
+    restore()
+    restore_native()
+  end
+
+  do
+    -- the view on screen was shown for sure: nothing open there is a state, and it is kept
+    local extra, set, restore_native = fake_open_nodes(
+      { git = {}, buffers = {} },
+      { "files", "buffers", "git" }
+    )
+    local tree, _, restore = fake_filetree(extra)
+    local state = treeview.capture()
+    H.eq(
+      vim.inspect(state.open_nodes),
+      vim.inspect({ git = {} }),
+      "an empty list for the view on screen only"
+    )
+    H.ok(treeview.save(session, state))
+    tree.open = false
+    H.ok(treeview.restore(session))
+    H.eq(set[1].name, "git")
+    H.eq(#set[1].ids, 0, "everything closed comes back closed")
+    restore()
+    restore_native()
+
+    -- on the files with nothing open anywhere: no field at all
+    extra, _, restore_native = fake_open_nodes(
+      { git = {}, buffers = {} },
+      { "files", "buffers", "git" }
+    )
+    tree, _, restore = fake_filetree(extra)
+    tree.view = "files"
+    H.eq(treeview.capture().open_nodes, nil)
+    restore()
+    restore_native()
+  end
+
+  do
+    -- without the list of views (the module is not there): the view on screen is asked all the same
+    local extra, _, restore_native =
+      fake_open_nodes({ git = { "git:staged" }, tests = { "t" } }, false)
+    local _, _, restore = fake_filetree(extra)
+    H.eq(vim.inspect(treeview.capture().open_nodes), vim.inspect({ git = { "git:staged" } }))
+    restore()
+    restore_native()
+
+    -- an older filetree.nvim: no getter, or a getter and no setter. Nothing is asked, no field
+    local asked = 0
+    local _, _, restore_old = fake_filetree({
+      get_open_nodes = function()
+        asked = asked + 1
+        return { "x" }
+      end,
+    })
+    H.eq(treeview.capture().open_nodes, nil, "what cannot be set again is not saved")
+    H.eq(asked, 0)
+    restore_old()
+
+    -- a getter that raises, and ids that cannot be written down
+    local _, _, restore_bad = fake_filetree({
+      get_view = function()
+        return "git"
+      end,
+      get_open_nodes = function(name)
+        if name == "git" then
+          return { "a", {}, true, 3, function() end, "b" }
+        end
+        error("boom")
+      end,
+      set_open_nodes = function()
+        return true
+      end,
+    })
+    local restore_views = H.stub("filetree.native", {
+      views = function()
+        return { { name = "git" }, { name = "tests" }, "junk", { name = 5 } }
+      end,
+    })
+    H.eq(
+      vim.inspect(treeview.capture().open_nodes),
+      vim.inspect({ git = { "a", 3, "b" } }),
+      "ids that are no string and no number are skipped; a view that raises is left out"
+    )
+    restore_views()
+    restore_bad()
+  end
+
+  do
+    -- a sidecar with open nodes on a filetree.nvim that cannot set them: the rest is restored
+    local tree, calls, restore = fake_filetree()
+    json.write(sidecar, {
+      adapter = "native",
+      root = proj,
+      view = "git",
+      expanded = {},
+      open_nodes = { git = { "git:staged" } },
+    })
+    tree.open = false
+    H.ok(treeview.restore(session))
+    H.eq(table.concat(calls, " | "), ("set_root %s | open | switch git"):format(proj))
+    restore()
+  end
+
+  do
+    -- a setter that raises does not stop the restore (the sidecar of the case above)
+    local shown = false
+    local tree, _, restore = fake_filetree({
+      set_open_nodes = function()
+        error("boom")
+      end,
+      show_view = function()
+        shown = true
+        return true
+      end,
+    })
+    tree.open = false
+    H.ok(treeview.restore(session))
+    H.ok(shown, "the view is shown all the same")
+    restore()
+  end
+
+  do
+    -- a hostile sidecar: only names that are words and ids that are strings or numbers reach the tree
+    local extra, set, restore_native = fake_open_nodes({}, false)
+    local _, _, restore = fake_filetree(extra)
+    local many = {}
+    for i = 1, treeview.MAX_OPEN_NODES + 10 do
+      many[i] = "n" .. i
+    end
+    json.write(sidecar, {
+      adapter = "native",
+      expanded = {},
+      open_nodes = {
+        git = { "ok", { "x" }, "also" },
+        ["git | lua os.exit(1)"] = { "x" },
+        files = { "x" },
+        tests = "no list",
+        big = many,
+        nul = { "a\0b", ("x"):rep(5000), 3 },
+      },
+    })
+    H.ok(treeview.restore(session))
+    local got = {}
+    for _, call in ipairs(set) do
+      got[call.name] = call.ids
+    end
+    H.eq(
+      #set,
+      3,
+      "big, git and nul; a name that is no word, the files and a list that is none are dropped"
+    )
+    H.eq(vim.inspect(got.git), vim.inspect({ "ok", "also" }))
+    H.eq(#got.big, treeview.MAX_OPEN_NODES, "capped")
+    H.eq(
+      vim.inspect(got.nul),
+      vim.inspect({ 3 }),
+      "a NUL in an id and an id of 5000 bytes are dropped"
+    )
+
+    json.write(sidecar, { adapter = "native", expanded = {}, open_nodes = "junk" })
+    H.ok(treeview.restore(session), "open_nodes that is no table is ignored")
+    H.eq(#set, 3, "and nothing is set")
+    restore()
+    restore_native()
+  end
+
   do
     -- a sidecar is untrusted: only what capture writes reaches the tree
     local _, calls, restore = fake_filetree()

@@ -190,6 +190,16 @@ back after the load:
 | the root folder | the tree opens there (a root that is gone is skipped, the tree still opens) |
 | the open folders of the files | opened again (the ones that still exist) |
 | the view on screen (`files`, `buffers`, `git`, a view another plugin registered) | shown again; a view that no longer exists is left out, the files stay |
+| per view of other sources (`buffers`, `git`, the tests ...): the nodes that are open, section heads among them | set again, also for a view that is not on screen: it takes them over when it is shown |
+
+The open nodes of the other views need a filetree.nvim that has
+`get_open_nodes` / `set_open_nodes` on its adapter; with an older one the
+field is left out of the sidecar and those views come back as the tree draws
+them. A view with nothing open is only saved when it is the one on screen: a
+view that was never shown answers the same as one where everything was closed
+by hand, and closing everything in a view nobody touched would be wrong. A
+view whose plugin is not set up yet at the time of the load is refused by the
+tree, and comes back as it is drawn.
 
 A save in the middle of work closes the tree as well (it is one of the `nofile`
 buffers the clean save wipes); sessions.nvim shows it again at once, as it was.

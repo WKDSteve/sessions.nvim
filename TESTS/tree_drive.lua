@@ -161,6 +161,90 @@ T.ok(
 T.ok("... and their files are on screen", T.shown("lua/mod/a.lua"))
 T.eq("neither the save nor the load said anything at warning level", T.loud(mark), {})
 
+-- ── what is open in a view of other sources ──────────────────────────────────
+if type(T.adapter.get_open_nodes) ~= "function" or type(T.adapter.set_open_nodes) ~= "function" then
+  T.na("this filetree.nvim has no get_open_nodes / set_open_nodes: the open nodes were not run")
+else
+  ---Focus a window that is not the tree (the load above replaced the windows of the editor).
+  local function to_editor()
+    local tree_win = T.adapter.get_winid()
+    for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+      if
+        win ~= tree_win
+        and vim.api.nvim_win_get_config(win).relative == ""
+        and not vim.wo[win].winfixbuf
+      then
+        vim.api.nvim_set_current_win(win)
+        return
+      end
+    end
+    error("no editor window")
+  end
+
+  -- two files in the editor, so the buffers have something below their head
+  to_editor()
+  vim.cmd.edit(vim.fn.fnameescape(dir .. "/lua/mod/a.lua"))
+  vim.cmd.edit(vim.fn.fnameescape(dir .. "/docs/guide.md"))
+  T.ok("fixture: the tree shows the buffers", (T.adapter.show_view("buffers")))
+  local open_nodes = {}
+  T.ok(
+    "fixture: the buffers have a node open",
+    T.wait(function()
+      open_nodes = T.adapter.get_open_nodes("buffers") or {}
+      return #open_nodes > 0
+    end)
+  )
+  mark = T.mark()
+
+  -- saved with the nodes open, closed afterwards: a load opens them
+  to_editor()
+  T.ok("the session is saved with the nodes open", (sessions.save("nodes")))
+  state =
+    vim.json.decode(table.concat(vim.fn.readfile(scratch .. "/sessions/.nodes.tree.json"), "\n"))
+  T.eq("the sidecar names the open nodes of the view", state.open_nodes.buffers, open_nodes)
+  T.eq("... and of no view that was never shown", vim.tbl_keys(state.open_nodes), { "buffers" })
+  T.ok(
+    "after the save the tree is open again",
+    T.wait(function()
+      return T.adapter.is_open()
+    end)
+  )
+  T.eq("... with the same nodes open", T.adapter.get_open_nodes("buffers"), open_nodes)
+
+  T.ok("fixture: every node closed", (T.adapter.set_open_nodes("buffers", {})))
+  T.eq("fixture: nothing is open", T.adapter.get_open_nodes("buffers"), {})
+  -- saved once more as it is now: everything closed in the view on screen is a state too
+  T.ok("the session is saved with every node closed", (sessions.save("closed")))
+  T.adapter.close()
+
+  T.ok("the session with the open nodes is loaded", (sessions.load("nodes")))
+  T.ok(
+    "the nodes that were open are open",
+    T.wait(function()
+      return T.adapter.is_open() and vim.deep_equal(T.adapter.get_open_nodes("buffers"), open_nodes)
+    end)
+  )
+  T.eq("... in the view it showed", T.adapter.get_view(), "buffers")
+
+  T.adapter.close()
+  T.ok("the session with every node closed is loaded", (sessions.load("closed")))
+  T.ok(
+    "every node is closed again",
+    T.wait(function()
+      return T.adapter.is_open() and vim.deep_equal(T.adapter.get_open_nodes("buffers"), {})
+    end)
+  )
+  T.eq(
+    "... and stays closed after the view was drawn",
+    (function()
+      T.settle(200)
+      return T.adapter.get_open_nodes("buffers")
+    end)(),
+    {}
+  )
+  T.eq("neither the saves nor the loads said anything at warning level", T.loud(mark), {})
+end
+
 T.eq("no dialog nobody expected", T.unanswered, 0)
 require("sessions.integrations.tree").unregister()
 vim.fn.delete(scratch, "rf")

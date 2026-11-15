@@ -13,7 +13,9 @@
 --- adapter (`require("filetree").adapter()`: `is_open`, `get_root_path`, `get_expanded_paths`,
 --- `set_root`, `expand_paths`, `open_cwd`) and, for the view, `adapter.get_view` / `adapter.show_view`
 --- when the adapter has them, else the feature `source_switcher` (`current` / `switch`), else the
---- buffer variable `filetree_view` (read only).
+--- buffer variable `filetree_view` (read only). What is open in a view of other sources (the groups of
+--- the buffers, of git, of the tests) goes through `adapter.get_open_nodes` / `adapter.set_open_nodes`,
+--- when the adapter has both; an older filetree.nvim has neither, and the field is left out.
 ---
 --- One place per session: filetree.nvim's own `session` feature keeps root and open folders per
 --- PROJECT and knows nothing of the view. Before it restores, this module tells that feature to step
@@ -35,12 +37,49 @@ local M = {}
 ---At most this many open folders are saved and restored.
 M.MAX_EXPANDED = 5000
 
+---At most this many views carry open nodes, and at most this many nodes per view.
+M.MAX_VIEWS = 64
+M.MAX_OPEN_NODES = 5000
+
+---An id longer than this is not one a tree hands out.
+local MAX_ID_LEN = 4096
+
 ---@class Sessions.TreeState
 ---@field v integer            Format version (1).
 ---@field adapter string       "native".
 ---@field root? string         The root folder of the tree.
 ---@field view? string         The view on screen ("files", "buffers", "git", ...).
 ---@field expanded string[]    The open folders of the files view.
+---@field open_nodes? table<string, (string|number)[]>  Per view of other sources: the ids of its open nodes, top to bottom.
+
+---@internal
+---Whether `name` is the name of a view: a word, handed to the tree as a name and never run.
+---@param name any
+---@return boolean
+local function is_view_name(name)
+  return type(name) == "string" and #name <= 64 and name:match("^[%w_.:-]+$") ~= nil
+end
+
+---@internal
+---The ids of `list` that can be written down and handed back: strings and numbers, capped.
+---@param list any
+---@return (string|number)[]
+local function clean_ids(list)
+  local out = {}
+  if type(list) ~= "table" then
+    return out
+  end
+  for _, id in ipairs(list) do
+    if #out >= M.MAX_OPEN_NODES then
+      break
+    end
+    local kind = type(id)
+    if kind == "number" or (kind == "string" and #id <= MAX_ID_LEN and not id:find("%z")) then
+      out[#out + 1] = id
+    end
+  end
+  return out
+end
 
 ---@internal
 ---@param session_path string
@@ -105,6 +144,54 @@ local function current_view(filetree, adapter)
   return type(view) == "string" and view ~= "" and view or nil
 end
 
+---@internal
+---The open nodes of the views of other sources, or nil when the tree cannot say (an older
+---filetree.nvim) or nothing is open anywhere.
+---
+---A view that was never shown answers an empty list, the same as one where everything was closed by
+---hand. Setting an empty list closes the heads a view opens by itself, so an empty list is kept only
+---for the view on screen (that one was shown, for sure); the others come back as the tree draws them.
+---@param adapter table
+---@param on_screen string|nil
+---@return table<string, (string|number)[]>|nil
+local function open_nodes_of(adapter, on_screen)
+  -- both or neither: what cannot be set again is not worth a field in the file
+  if type(adapter.get_open_nodes) ~= "function" or type(adapter.set_open_nodes) ~= "function" then
+    return nil
+  end
+  local names, seen = {}, {}
+  ---@param name any
+  local function add(name)
+    if is_view_name(name) and name ~= "files" and not seen[name] and #names < M.MAX_VIEWS then
+      seen[name] = true
+      names[#names + 1] = name
+    end
+  end
+  add(on_screen)
+  -- `package.loaded`: with the own tree open this module is loaded; saving loads nothing
+  local native = package.loaded["filetree.native"]
+  if type(native) == "table" and type(native.views) == "function" then
+    local ok, specs = pcall(native.views)
+    if ok and type(specs) == "table" then
+      for _, spec in ipairs(specs) do
+        add(type(spec) == "table" and spec.name or nil)
+      end
+    end
+  end
+  local out, any = {}, false
+  for _, name in ipairs(names) do
+    local ok, ids = pcall(adapter.get_open_nodes, name)
+    if ok and type(ids) == "table" then
+      local clean = clean_ids(ids)
+      if #clean > 0 or name == on_screen then
+        out[name] = clean
+        any = true
+      end
+    end
+  end
+  return any and out or nil
+end
+
 ---What the tree shows right now, or nil when there is nothing to save: filetree.nvim was never
 ---loaded, it drives another tree plugin, or its tree is closed. Call it BEFORE the session's
 ---blacklisted buffers are wiped: the tree buffer is one of them.
@@ -139,6 +226,7 @@ function M.capture()
       end
     end
   end
+  state.open_nodes = open_nodes_of(adapter, state.view)
   return state
 end
 
@@ -171,8 +259,22 @@ local function checked(data)
     state.root = data.root
   end
   -- a view name is a word: it is handed to the tree as a name, never run
-  if type(data.view) == "string" and data.view:match("^[%w_.:-]+$") and #data.view <= 64 then
+  if is_view_name(data.view) then
     state.view = data.view
+  end
+  if type(data.open_nodes) == "table" then
+    local names = {}
+    for name, ids in pairs(data.open_nodes) do
+      if is_view_name(name) and name ~= "files" and type(ids) == "table" then
+        names[#names + 1] = name
+      end
+    end
+    -- in a fixed order, so a file with more views than the cap keeps the same ones every time
+    table.sort(names)
+    for i = 1, math.min(#names, M.MAX_VIEWS) do
+      state.open_nodes = state.open_nodes or {}
+      state.open_nodes[names[i]] = clean_ids(data.open_nodes[names[i]])
+    end
   end
   if type(data.expanded) == "table" then
     for _, path in ipairs(data.expanded) do
@@ -188,7 +290,7 @@ local function checked(data)
 end
 
 ---Show the tree again as the session saved it: open it at the saved root, open the saved folders,
----switch to the saved view. A no-op without a sidecar, without filetree.nvim, or when filetree.nvim
+---set the open nodes of the other views, switch to the saved view. A no-op without a sidecar, without filetree.nvim, or when filetree.nvim
 ---is not set up on its own tree. The window that had the focus keeps it. See `M.apply`.
 ---@param session_path string
 ---@return boolean applied
@@ -235,6 +337,15 @@ function M.apply(state)
   end
   if #state.expanded > 0 and type(adapter.expand_paths) == "function" then
     pcall(adapter.expand_paths, state.expanded)
+  end
+  -- before the view is shown: a view that is not on screen yet takes its open nodes over when it is,
+  -- and is drawn once. A view nobody has any more (its plugin is gone) is refused by name.
+  if state.open_nodes and type(adapter.set_open_nodes) == "function" then
+    local names = vim.tbl_keys(state.open_nodes)
+    table.sort(names)
+    for _, name in ipairs(names) do
+      pcall(adapter.set_open_nodes, name, state.open_nodes[name])
+    end
   end
   if state.view and state.view ~= "files" then
     if type(adapter.show_view) == "function" then

@@ -82,7 +82,8 @@ require("sessions").setup({
   restore_pinned_buffers = true,
 
   -- Persist what the file tree showed: its root, the view on screen (files,
-  -- buffers, git, ...) and the open folders. Only for filetree.nvim's own
+  -- buffers, git, ...), the open folders, and what is open in the views of
+  -- other sources (with a filetree.nvim that can say). Only for filetree.nvim's own
   -- tree (adapter = "native"); stored in a `.{name}.tree.json` sidecar and
   -- put back after the load, and right after a `:Session save` in the
   -- middle of work (which closes the tree with the other nofile buffers). A no-op that writes nothing without

@@ -50,7 +50,9 @@ return {
   restore_pinned_buffers = true,
   -- Persist what the file tree showed (filetree.nvim's own tree, `adapter =
   -- "native"`): its root, the view on screen (files, buffers, git, ...) and
-  -- the open folders. `:mksession` cannot carry the tree window, so without
+  -- the open folders, and what is open in the views of other sources (with
+  -- a filetree.nvim that has get_open_nodes / set_open_nodes on its
+  -- adapter). `:mksession` cannot carry the tree window, so without
   -- this a session comes back without the tree. No-op (and no sidecar
   -- written) without filetree.nvim, with another tree plugin behind it, or
   -- when the tree is closed at the time of the save. See sessions.treeview.
