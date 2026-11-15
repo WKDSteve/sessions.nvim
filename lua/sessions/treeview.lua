@@ -74,7 +74,9 @@ local function clean_ids(list)
       break
     end
     local kind = type(id)
-    if kind == "number" or (kind == "string" and #id <= MAX_ID_LEN and not id:find("%z")) then
+    -- a number JSON can carry: one that is not finite would fail the write of the whole sidecar
+    local finite = kind == "number" and id == id and id ~= math.huge and id ~= -math.huge
+    if finite or (kind == "string" and #id <= MAX_ID_LEN and not id:find("%z")) then
       out[#out + 1] = id
     end
   end

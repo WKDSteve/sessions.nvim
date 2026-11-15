@@ -361,7 +361,7 @@ return function(H)
       end,
       get_open_nodes = function(name)
         if name == "git" then
-          return { "a", {}, true, 3, function() end, "b" }
+          return { "a", {}, true, 3, function() end, 1 / 0, -1 / 0, 0 / 0, "b" }
         end
         error("boom")
       end,
@@ -377,7 +377,11 @@ return function(H)
     H.eq(
       vim.inspect(treeview.capture().open_nodes),
       vim.inspect({ git = { "a", 3, "b" } }),
-      "ids that are no string and no number are skipped; a view that raises is left out"
+      "ids that are no string and no finite number are skipped; a view that raises is left out"
+    )
+    H.ok(
+      treeview.save(session, treeview.capture()),
+      "and the sidecar is written: a number that is not finite would have failed the whole file"
     )
     restore_views()
     restore_bad()
