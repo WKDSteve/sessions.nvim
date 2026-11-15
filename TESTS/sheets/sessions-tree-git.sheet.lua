@@ -29,8 +29,12 @@ return {
   },
   steps = {
     {
-      lua = [[dofile(vim.fn.getcwd() .. "/TESTS/sheets/_helpers.lua").tree_boot()
-      _G.repo("myrepo")
+      lua = [[dofile(vim.fn.getcwd() .. "/TESTS/sheets/_helpers.lua").tree_boot()]],
+      note = "the editor: the own tree and sessions.nvim set up",
+    },
+    {
+      -- a step of its own: several git processes, slow on a loaded Windows machine, and one call has 10 s
+      lua = [[_G.repo("myrepo")
       _G.write("a.txt", { "a", "changed" })
       _G.write("c.txt", { "new" })
       vim.cmd.edit("a.txt")]],
