@@ -114,6 +114,7 @@ sessions.nvim is released under the [MIT License](https://opensource.org/license
 
 **Uses**
 
+- [filetree.nvim](https://github.com/WKDSteve/filetree.nvim): sessions.nvim saves the views of the own tree of filetree.nvim with a session and opens them again on restore. ([picture](assets/graphs/pair/sessions.nvim--filetree.nvim.png))
 - [ui.nvim](https://github.com/WKDSteve/ui.nvim): sessions.nvim asks for confirmations with `kit.confirm` of ui.nvim when it is installed. ([picture](assets/graphs/pair/sessions.nvim--ui.nvim.png))
 - [lib.nvim](https://github.com/WKDSteve/lib.nvim): the shared base of the plugins.
 
