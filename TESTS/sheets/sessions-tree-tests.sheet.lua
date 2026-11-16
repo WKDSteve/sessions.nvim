@@ -64,9 +64,9 @@ return {
     { keys = "ll", note = "down to the describe, and open that too" },
     { wait = [[_G.tree_line("adds") ~= nil]], note = "its cases are listed" },
     {
-      wait = [[_G.tree_steady(600)]],
+      steady = 600,
       timeout = 8000,
-      note = "the tree has drawn the same for a while: its decorators come debounced, after the rows",
+      note = "the screen has drawn the same for a while: the decorators of the tree come debounced, after the rows",
     },
     { screen = "tests-before-quit", masks = TREE_ONLY },
     {
@@ -99,9 +99,9 @@ return {
       note = "the focus is in the editor, not in the tree",
     },
     {
-      wait = [[_G.tree_steady(600)]],
+      steady = 600,
       timeout = 8000,
-      note = "the tree has drawn the same for a while: its decorators come debounced, after the rows",
+      note = "the screen has drawn the same for a while: the decorators of the tree come debounced, after the rows",
     },
     { screen = "tests-after-restart", masks = TREE_ONLY },
     {
@@ -134,9 +134,9 @@ return {
       note = "the nodes the session named are open in the view that came late",
     },
     {
-      wait = [[_G.tree_steady(600)]],
+      steady = 600,
       timeout = 8000,
-      note = "the tree has drawn the same for a while: its decorators come debounced, after the rows",
+      note = "the screen has drawn the same for a while: the decorators of the tree come debounced, after the rows",
     },
     { screen = "tests-registered-late", masks = TREE_ONLY },
   },

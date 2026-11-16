@@ -52,9 +52,9 @@ return {
       note = "the tree follows the file in the editor: its cursor line is on a.txt (it gets there a moment later)",
     },
     {
-      wait = [[_G.tree_steady(600)]],
+      steady = 600,
       timeout = 8000,
-      note = "the tree has drawn the same for a while: its decorators come debounced, after the rows",
+      note = "the screen has drawn the same for a while: the decorators of the tree come debounced, after the rows",
     },
     { screen = "git-before-quit", masks = TREE_ONLY },
     {
@@ -89,9 +89,9 @@ return {
       note = "the tree follows the file in the editor: its cursor line is on a.txt (it gets there a moment later)",
     },
     {
-      wait = [[_G.tree_steady(600)]],
+      steady = 600,
       timeout = 8000,
-      note = "the tree has drawn the same for a while: its decorators come debounced, after the rows",
+      note = "the screen has drawn the same for a while: the decorators of the tree come debounced, after the rows",
     },
     { screen = "git-after-restart", masks = TREE_ONLY },
   },

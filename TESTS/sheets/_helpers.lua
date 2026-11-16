@@ -374,29 +374,6 @@ function _G.git_badge(rel)
   return false
 end
 
----Whether the tree window has drawn the same for `ms` milliseconds (text and highlights of every cell): what a
----snapshot waits for. Its decorators (the git colour of a name, the mark of a file open in a buffer) answer
----debounced, each a moment after the rows; a fixed time loses to a loaded machine, `settle` to the file watcher.
----@param ms integer
----@return boolean
-function _G.tree_steady(ms)
-  vim.cmd.redraw()
-  local win = _G.tree.get_winid()
-  local pos = vim.fn.win_screenpos(win)
-  local cells = {}
-  for r = pos[1], pos[1] + vim.api.nvim_win_get_height(win) do
-    for c = pos[2], pos[2] + vim.api.nvim_win_get_width(win) - 1 do
-      cells[#cells + 1] = vim.fn.screenstring(r, c) .. ":" .. vim.fn.screenattr(r, c)
-    end
-  end
-  local shot, now = table.concat(cells, "|"), vim.uv.now()
-  if shot ~= _G._steady_shot then
-    _G._steady_shot, _G._steady_since = shot, now
-    return false
-  end
-  return now - _G._steady_since >= ms
-end
-
 ---Leave the tree for the first window that is not the tree's: where a person is when they quit.
 function _G.to_editor()
   for _, w in ipairs(_G.wins()) do
