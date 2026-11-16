@@ -4,6 +4,12 @@ return {
   feature = "sessions.chip",
   title = "sessions.nvim: the chip replaces the saved/loaded notify, hides itself and toggles",
   task = "sessions.nvim/manual-checklist-run",
+  requires = {
+    {
+      lua = [[dofile(vim.fn.getcwd() .. "/TESTS/sheets/_helpers.lua").add_deps("ui.nvim")]],
+      reason = "ui.nvim is not beside this repository",
+    },
+  },
   steps = {
     {
       lua = [[dofile(vim.fn.getcwd() .. "/TESTS/sheets/_helpers.lua")

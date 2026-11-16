@@ -5,6 +5,12 @@ return {
   feature = "sessions.picker",
   title = "sessions.nvim: :SessionLoad hands over items and previews, <CR> loads, <C-d> deletes the selection",
   task = "sessions.nvim/manual-checklist-run",
+  requires = {
+    {
+      lua = [[dofile(vim.fn.getcwd() .. "/TESTS/sheets/_helpers.lua").add_deps("ui.nvim")]],
+      reason = "ui.nvim is not beside this repository",
+    },
+  },
   steps = {
     {
       lua = [[dofile(vim.fn.getcwd() .. "/TESTS/sheets/_helpers.lua")

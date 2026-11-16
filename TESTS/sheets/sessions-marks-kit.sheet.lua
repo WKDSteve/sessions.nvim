@@ -6,6 +6,12 @@ return {
   title = "sessions.nvim: :Session marks opens the kit menu: preview, keys, close; a missing picker falls back",
   task = "sessions.nvim/manual-checklist-run",
   sizes = { { rows = 40, cols = 120 } },
+  requires = {
+    {
+      lua = [[dofile(vim.fn.getcwd() .. "/TESTS/sheets/_helpers.lua").add_deps("ui.nvim")]],
+      reason = "ui.nvim is not beside this repository",
+    },
+  },
   steps = {
     {
       lua = [[dofile(vim.fn.getcwd() .. "/TESTS/sheets/_helpers.lua")

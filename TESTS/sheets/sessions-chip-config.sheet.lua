@@ -5,6 +5,12 @@ return {
   feature = "sessions.chip",
   title = "sessions.nvim: anchor, shape, min_width, timeout_ms, track_mode and pulse of the chip",
   task = "sessions.nvim/manual-checklist-run",
+  requires = {
+    {
+      lua = [[dofile(vim.fn.getcwd() .. "/TESTS/sheets/_helpers.lua").add_deps("ui.nvim")]],
+      reason = "ui.nvim is not beside this repository",
+    },
+  },
   steps = {
     {
       lua = [[dofile(vim.fn.getcwd() .. "/TESTS/sheets/_helpers.lua")
