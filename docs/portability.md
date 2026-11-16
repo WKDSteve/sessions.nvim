@@ -58,3 +58,14 @@ Rewriting happens on an in-memory temp copy sourced instead of the
 original file — the stored session stays untouched, so it keeps working
 for every machine in your `root_remap` set, not just the last one that
 loaded it.
+
+## Sidecars of other plugins
+
+A plugin that keeps its own file beside the session (terminal.nvim's
+`.<name>.terminals.json`, for example) can follow both options: the
+`SessionsSavePost` / `SessionsLoadPost` events carry `root` (only with
+`relative_paths`: the save-time `cwd`, or the `cwd` a load re-anchored to)
+and `root_remap` (a copy, only when configured) in `ev.data`. Store paths
+below `root` relative to it on save, resolve them against `root` on load,
+and translate the remaining absolute ones through `root_remap`.
+`lib.nvim.fs.portable` does both on a string.

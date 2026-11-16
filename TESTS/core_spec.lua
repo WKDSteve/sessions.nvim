@@ -1016,6 +1016,67 @@ return function(H)
     vim.cmd("silent! %bwipeout!")
   end
 
+  -- ------------------------------------ root / root_remap in the User events
+
+  do
+    local seen = {}
+    local group = api.nvim_create_augroup("SessionsSpecRootEvents", { clear = true })
+    for _, pattern in ipairs({ "SessionsSavePost", "SessionsLoadPost" }) do
+      api.nvim_create_autocmd("User", {
+        group = group,
+        pattern = pattern,
+        callback = function(ev)
+          seen[#seen + 1] = { pattern = pattern, data = ev.data }
+        end,
+      })
+    end
+
+    setup()
+    H.ok(core.save("rooted"))
+    H.eq(seen[#seen].data.root, nil, "without relative_paths a save names no root")
+    H.eq(seen[#seen].data.root_remap, nil, "nor a remap that is not configured")
+
+    local remap = { ["/old/home"] = "/new/home" }
+    setup({ relative_paths = true, root_remap = remap })
+    local cwd = vim.fn.getcwd()
+    H.ok(core.save("rooted"))
+    H.eq(seen[#seen].pattern, "SessionsSavePost")
+    H.eq(
+      seen[#seen].data.root,
+      cwd,
+      "relative_paths: the save names the directory it made paths relative to"
+    )
+    H.ok(vim.deep_equal(seen[#seen].data.root_remap, remap), "and the configured remap")
+    seen[#seen].data.root_remap["/old/home"] = "/tampered"
+    H.eq(
+      config.get().root_remap["/old/home"],
+      "/new/home",
+      "a listener gets a copy, not the config"
+    )
+
+    H.ok(core.load("rooted"))
+    H.eq(seen[#seen].pattern, "SessionsLoadPost")
+    H.eq(seen[#seen].data.root, cwd, "the load names the directory it re-anchored to")
+    H.ok(vim.deep_equal(seen[#seen].data.root_remap, remap), "the load names the remap too")
+
+    H.ok(core.save_tab("rooted-tab"))
+    H.eq(seen[#seen].data.root, cwd, "a tab snapshot names its root too")
+    H.ok(core.load_tab("rooted-tab"))
+    H.eq(seen[#seen].data.root, cwd)
+    vim.cmd("silent! tabonly!")
+
+    setup({ root_remap = remap })
+    H.ok(core.load("rooted"))
+    H.eq(seen[#seen].data.root, nil, "root_remap alone names no root")
+    H.ok(vim.deep_equal(seen[#seen].data.root_remap, remap), "but the remap")
+
+    api.nvim_del_augroup_by_name("SessionsSpecRootEvents")
+    os.remove(config.get().root .. "/.tabs/rooted-tab.vim")
+    core.delete("rooted")
+    setup()
+    vim.cmd("silent! %bwipeout!")
+  end
+
   -- --------------------------------------------------------- delete, rename
 
   do

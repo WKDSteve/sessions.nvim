@@ -114,12 +114,16 @@ tab-complete from their own separate name lists.
 
 | Event (`User`) | When | `ev.data` |
 | --- | --- | --- |
-| `SessionsSavePost` | After a session or tab snapshot was written (not for the `last` snapshot at exit), next to `hooks.on_save` | `{ name, path, tab }` |
-| `SessionsLoadPost` | After a session or tab snapshot was sourced, next to `hooks.on_load` | `{ name, path, tab }` |
+| `SessionsSavePost` | After a session or tab snapshot was written (not for the `last` snapshot at exit), next to `hooks.on_save` | `{ name, path, tab, root?, root_remap? }` |
+| `SessionsLoadPost` | After a session or tab snapshot was sourced, next to `hooks.on_load` | `{ name, path, tab, root?, root_remap? }` |
 | `SessionsRenamePost` | After `:Session rename` moved the session file and this plugin's own sidecars | `{ old_name, old_path, name, path }` |
 | `SessionsDeletePost` | After `:Session delete` removed the session file and this plugin's own sidecars | `{ name, path }` |
 
 `tab` is `true` for `save-tab`/`load-tab`. A listener that raises does not fail the save or load.
+`root` is set only with `relative_paths`: the directory the session's paths were made relative to (save)
+or re-anchored to (load). `root_remap` is a copy of the configured table, present only when it is not
+empty. Both let a plugin with its own sidecar store paths as portably as the session file does
+(see [Portability](portability.md#sidecars-of-other-plugins)).
 Any number of plugins can listen; nothing has to be registered. The rename and delete events let a plugin
 that keeps its own sidecar (`.<name>.<what>.json`) move or remove it; a failed rename or delete fires nothing.
 

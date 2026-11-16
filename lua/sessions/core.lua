@@ -465,19 +465,33 @@ end
 
 ---@internal
 --- Tell other plugins that a session was saved or loaded, through a `User` autocommand
---- (`SessionsSavePost` / `SessionsLoadPost`; `data` = `{ name, path, tab }`). `hooks.on_save` and
---- `hooks.on_load` are one slot each and belong to the user's config; this one has any number of
---- listeners and needs no registration, so a plugin can follow sessions without touching them.
---- A listener that raises does not fail the save or load (the session is already done by then).
+--- (`SessionsSavePost` / `SessionsLoadPost`; `data` = `{ name, path, tab, root?, root_remap? }`).
+--- `hooks.on_save` and `hooks.on_load` are one slot each and belong to the user's config; this one
+--- has any number of listeners and needs no registration, so a plugin can follow sessions without
+--- touching them. A listener that raises does not fail the save or load (the session is already done
+--- by then).
+---
+--- `root` and `root_remap` let a plugin with its own sidecar store paths the way the session file
+--- does: `root` is set only with `relative_paths` (the directory the session's paths were made
+--- relative to on save, or re-anchored to on load), `root_remap` only when it is configured (a copy,
+--- so a listener cannot change the config).
 ---@param event "SessionsSavePost"|"SessionsLoadPost"
 ---@param name string
 ---@param path string
 ---@param tab boolean A tab snapshot (`save_tab`/`load_tab`), not a full session
-local function announce(event, name, path, tab)
+---@param cwd string The working directory of the save, or the one the load re-anchored to
+local function announce(event, name, path, tab, cwd)
+  local cfg = require("sessions.config").cfg
   pcall(api.nvim_exec_autocmds, "User", {
     pattern = event,
     modeline = false,
-    data = { name = name, path = path, tab = tab },
+    data = {
+      name = name,
+      path = path,
+      tab = tab,
+      root = (cfg.relative_paths and cwd ~= "") and cwd or nil,
+      root_remap = next(cfg.root_remap) and vim.deepcopy(cfg.root_remap) or nil,
+    },
   })
 end
 
@@ -671,7 +685,7 @@ local function save_session(name, opts, on_tree)
     pcall(cfg.hooks.on_save, si.name, si.path)
   end
   if not snapshot then
-    announce("SessionsSavePost", si.name, si.path, false)
+    announce("SessionsSavePost", si.name, si.path, false, save_cwd)
   end
 
   return true, si.path, stale
@@ -773,7 +787,7 @@ function M.save_tab(name)
   if cfg.hooks.on_save then
     pcall(cfg.hooks.on_save, si.name, path)
   end
-  announce("SessionsSavePost", si.name, path, true)
+  announce("SessionsSavePost", si.name, path, true, save_cwd)
 
   return true, path
 end
@@ -796,6 +810,8 @@ function M.load(name)
 
   -- Collapse windows before sourcing to avoid E445 from the session's `only`/`tabonly`.
   local hidden = modified_buffer_names()
+  -- The directory the placeholder is re-anchored to (the session's own `cd` then keeps it).
+  local load_cwd = fn.getcwd()
   _loading = true
   local ok, err = pcall(function()
     pcall(function()
@@ -808,7 +824,7 @@ function M.load(name)
     local source_path, is_temp = si.path, false
     if cfg.relative_paths or next(cfg.root_remap) then
       source_path, is_temp =
-        require("sessions.portable").prepare_for_load(si.path, fn.getcwd(), cfg.root_remap)
+        require("sessions.portable").prepare_for_load(si.path, load_cwd, cfg.root_remap)
     end
 
     local sourced, source_err = pcall(vim.cmd.source, source_path)
@@ -857,7 +873,7 @@ function M.load(name)
   -- The chip went with `only` and was not drawn mid-load (see M.loading()):
   -- drawn here, once, for every caller (the pickers, require("sessions").load()).
   require("sessions.chip").refresh()
-  announce("SessionsLoadPost", si.name, si.path, false)
+  announce("SessionsLoadPost", si.name, si.path, false, load_cwd)
 
   return true, si.path, hidden, stale
 end
@@ -883,6 +899,7 @@ function M.load_tab(name)
   end
 
   apply_sessionoptions()
+  local load_cwd = fn.getcwd()
   _loading = true
   local ok, err = pcall(function()
     vim.cmd("tabnew")
@@ -890,7 +907,7 @@ function M.load_tab(name)
     local source_path, is_temp = path, false
     if cfg.relative_paths or next(cfg.root_remap) then
       source_path, is_temp =
-        require("sessions.portable").prepare_for_load(path, fn.getcwd(), cfg.root_remap)
+        require("sessions.portable").prepare_for_load(path, load_cwd, cfg.root_remap)
     end
 
     local sourced, source_err = pcall(vim.cmd.source, source_path)
@@ -918,7 +935,7 @@ function M.load_tab(name)
     pcall(cfg.hooks.on_load, name, path)
   end
   require("sessions.chip").refresh() -- not drawn mid-load, see M.load()
-  announce("SessionsLoadPost", name, path, true)
+  announce("SessionsLoadPost", name, path, true, load_cwd)
 
   return true, path, stale
 end
