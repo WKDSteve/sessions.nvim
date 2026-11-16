@@ -46,7 +46,10 @@ end
 ---ui.nvim on the runtimepath, for the sheets of the chip, the dialogs and the kit menu. Call before `_G.setup`; the
 ---sheet `requires` it (`add_deps("ui.nvim")`), so a machine without ui.nvim reports a skip, not a Lua error.
 function _G.with_ui()
-  assert(M.add_deps("ui.nvim"), "ui.nvim was not found (TESTS/minimal_init.lua, vim.g.sessions_sheets_ui_nvim)")
+  assert(
+    M.add_deps("ui.nvim"),
+    "ui.nvim was not found (TESTS/minimal_init.lua, vim.g.sessions_sheets_ui_nvim)"
+  )
 end
 
 ---A new project directory below the temp directory.
