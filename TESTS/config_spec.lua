@@ -24,6 +24,10 @@ return function(H)
   config.setup({})
   H.eq(config.get().default_name, default_name, "setup({}) restores the defaults")
 
+  -- A plain `nvim` must not restore anything on its own: only `nvim +LastSession` / `:Session load last` do.
+  H.eq(DEFAULTS.autoload, false, "autoload is off by default")
+  H.eq(config.get().autoload, false, "and stays off after setup({})")
+
   -- Regression, 2026-09-29: chip.pulse used to default to true, flashing
   -- ui.kit.chip.pulse's own unrelated default colour ("DiagnosticWarn") on
   -- every save/load -- read live as an unexplained colour flash, since the

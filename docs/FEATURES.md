@@ -253,8 +253,11 @@ written, never per line. Without `marks.enable` there are no pins and no signs.
 
 ## Autoload / autosave
 
-Loads the contextual session automatically on a plain `nvim` start (no
-file args), and saves on `VimLeavePre`. Autosave's target follows
+Opt-in (`autoload` is `false` by default): a plain `nvim` start restores
+nothing, in any directory. Only `nvim +LastSession` and `:Session load last`
+(or a name) bring a session back. With `autoload = true` (or `"ask"`) a
+start without file args loads the contextual session instead; it saves on
+`VimLeavePre` either way. Autosave's target follows
 `opts.autosave_name`: `true` (the default) auto-resolves branch/project-
 aware just like a bare `:Session save`, so leaving one project doesn't
 clobber another's autosave in a shared fixed slot; a string pins it to that
