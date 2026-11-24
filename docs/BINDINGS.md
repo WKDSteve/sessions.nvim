@@ -93,7 +93,7 @@ One command, `:Session <subcommand>` (built via
 | `:LastSession`             | Load the session named "last" (`default_name`) — the snapshot every exit writes (`save_last`), so `nvim +LastSession` works without CLI-arg quoting; with no `last` yet it resolves like a bare `:Session load` |
 | `:SessionLoad`             | Open a session picker with live preview (Snacks.picker or Telescope) — see [Picker Integration](picker.md) |
 | `:Session marks [menu [kind]]` | The mark list in a picker or the editable float — see [Marks](marks.md) |
-| `:Session marks add [path] [--front] [--permanent]` | Mark a file (current buffer by default) |
+| `:Session marks add [path] [--front] [--permanent]` | Mark a file (current buffer by default, or for a lone `.`) |
 | `:Session marks remove [path]` | Unmark |
 | `:Session marks pin [path] [--front]` / `unpin [path]` | A runtime default, and its undo |
 | `:Session marks defaults sync` / `reset` | Top the list up with the defaults, or rebuild it from them |

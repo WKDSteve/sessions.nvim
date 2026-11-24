@@ -371,18 +371,32 @@ end
 -- ---------------------------------------------------------------- mutations
 
 ---@internal
----A path argument: `nil`/`""` means the current buffer. Must exist.
+---The file a path argument names, without checking that it exists: `nil`,
+---`""` and a lone `.` all mean the current buffer (a `.` would otherwise
+---resolve to the working directory, which is never a markable file).
 ---@param path string|nil
 ---@return string|nil abs
 ---@return string|nil err
-local function resolve_arg(path)
-  if type(path) ~= "string" or path == "" then
+local function arg_path(path)
+  if type(path) ~= "string" or path == "" or path == "." then
     path = vim.api.nvim_buf_get_name(0)
     if path == "" then
       return nil, "the current buffer has no file name"
     end
   end
-  local abs = M.canon(path)
+  return M.canon(path), nil
+end
+
+---@internal
+---A path argument (see `arg_path`). Must exist.
+---@param path string|nil
+---@return string|nil abs
+---@return string|nil err
+local function resolve_arg(path)
+  local abs, aerr = arg_path(path)
+  if not abs then
+    return nil, aerr
+  end
   if not is_file(abs) then
     return nil, "not an existing file: " .. abs
   end
@@ -432,15 +446,9 @@ end
 ---@return boolean removed
 ---@return string|nil err
 function M.remove(path)
-  local abs
-  if type(path) == "string" and path ~= "" then
-    abs = M.canon(path)
-  else
-    abs = vim.api.nvim_buf_get_name(0)
-    if abs == "" then
-      return false, "the current buffer has no file name"
-    end
-    abs = M.canon(abs)
+  local abs, aerr = arg_path(path)
+  if not abs then
+    return false, aerr
   end
   local items = read_items()
   local at = index_of(items, abs)
@@ -501,15 +509,9 @@ end
 ---@return boolean ok
 ---@return string|nil err
 function M.unpin(path)
-  local abs
-  if type(path) == "string" and path ~= "" then
-    abs = M.canon(path)
-  else
-    abs = vim.api.nvim_buf_get_name(0)
-    if abs == "" then
-      return false, "the current buffer has no file name"
-    end
-    abs = M.canon(abs)
+  local abs, aerr = arg_path(path)
+  if not abs then
+    return false, aerr
   end
   local k = key_of(abs)
   local pins, kept, removed = read_pins(), {}, false

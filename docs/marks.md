@@ -66,7 +66,7 @@ either way; they are a property of the machine, not of a project.
 | --- | --- |
 | `:Session marks` | Open the list in the configured picker (`marks.menu.ui`) |
 | `:Session marks menu [auto\|edit\|kit\|snacks\|telescope\|fzf]` | Open it in a specific UI |
-| `:Session marks add [path] [--front] [--permanent]` | Add (current buffer if no path); `--front` puts it first, `--permanent` also pins it |
+| `:Session marks add [path] [--front] [--permanent]` | Add (current buffer if no path, or for a lone `.`); `--front` puts it first, `--permanent` also pins it |
 | `:Session marks remove [path]` | Drop from the list |
 | `:Session marks pin [path] [--front]` | Pin, and add if not listed |
 | `:Session marks unpin [path]` | Stop treating it as a default; the list entry stays |

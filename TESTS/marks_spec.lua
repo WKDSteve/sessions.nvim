@@ -132,6 +132,20 @@ return function(H)
   H.falsy(ok_rm2, "removing again fails")
   H.contains(err_rm2, "not in the list", "...saying it is not listed")
 
+  -- a lone "." names the current buffer, like no argument; it must not
+  -- resolve to the working directory
+  do
+    local prev = vim.api.nvim_get_current_buf()
+    vim.cmd("silent edit " .. vim.fn.fnameescape(d))
+    local ok_dot, err_dot = marks.add(".")
+    H.ok(ok_dot, "add '.' marks the current buffer: " .. tostring(err_dot))
+    H.eq(marks.index(d), 2, "...appended as the current file, not the directory")
+    local ok_rm_dot = marks.remove(".")
+    H.ok(ok_rm_dot, "remove '.' drops the current buffer")
+    H.eq(marks.index(d), nil, "...and it is gone")
+    vim.api.nvim_set_current_buf(prev)
+  end
+
   -- the store is a file, and survives a fresh module -----------------------
 
   H.eq(vim.fn.filereadable(marks.store_path()), 1, "the store file exists")
