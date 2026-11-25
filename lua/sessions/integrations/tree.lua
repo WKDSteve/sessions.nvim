@@ -34,18 +34,7 @@ local sign_text = "*"
 
 ---One spelling for a path, the one a tree view uses for its keys: `/`-separated, the drive letter in
 ---upper case, no trailing slash.
----@param path string
----@return string
-function M.norm(path)
-  path = path:gsub("\\", "/")
-  path = path:gsub("^(%a):", function(drive)
-    return drive:upper() .. ":"
-  end)
-  if #path > 1 and path:sub(-1) == "/" and not path:match("^%a:/$") then
-    path = path:sub(1, -2)
-  end
-  return path
-end
+M.norm = require("lib.nvim.fs.norm")
 
 ---Read the pins again and tell the listening trees which paths changed.
 function M.refresh()
