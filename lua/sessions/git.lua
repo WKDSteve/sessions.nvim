@@ -53,30 +53,52 @@ end
 ---SHA when detached (in which case there is no branch name and nil is
 ---correct). Shared by `M.current_branch()`'s own no-`lib.nvim.git`
 ---fallback and `M.current_branch_no_spawn()` below.
+---
+---The second value says how sure that answer is: "branch" (a name), "detached" (a raw object id: git has no
+---branch either), "none" (no `.git` above `start_path`: git finds no repository either) or "unknown" (a `.git`
+---whose HEAD cannot be read or names something else, and the reftable format, whose HEAD is the placeholder
+---`ref: refs/heads/.invalid`: only git itself knows the branch there).
 ---@param start_path string
----@return string|nil
+---@return string|nil branch
+---@return "branch"|"detached"|"none"|"unknown" state
 local function read_branch_from_head(start_path)
   local dotgit = find_gitdir(start_path)
   if not dotgit then
-    return nil
+    return nil, "none"
   end
 
   local ok_head, head = pcall(vim.fn.readfile, dotgit .. "/HEAD", "", 1)
   if not ok_head or not head or not head[1] then
-    return nil
+    return nil, "unknown"
   end
 
-  local branch = head[1]:match("^ref:%s*refs/heads/(.+)$")
-  return (branch and branch ~= "") and vim.trim(branch) or nil
+  local line = vim.trim(head[1])
+  local branch = line:match("^ref:%s*refs/heads/(.+)$")
+  if branch == ".invalid" then
+    return nil, "unknown"
+  end
+  if branch and branch ~= "" then
+    return branch, "branch"
+  end
+  -- a SHA-1 (40) or SHA-256 (64) object id
+  if line:match("^%x+$") and (#line == 40 or #line == 64) then
+    return nil, "detached"
+  end
+  return nil, "unknown"
 end
 
 ---@return string|nil
 function M.current_branch()
   -- The file read first: `lib.nvim.git` starts a `git` process (~150 ms on Windows, on every save and name
-  -- resolution). lib.nvim answers only what the file cannot (a detached HEAD, no repository found).
-  local direct = read_branch_from_head(vim.fn.getcwd())
-  if direct then
-    return direct
+  -- resolution). Where the file already gives git's own answer (a branch, a detached HEAD, no repository) no
+  -- process starts; lib.nvim answers only what the file cannot know: an unreadable HEAD, the reftable format, and a
+  -- `GIT_DIR` in the environment (git then reads a repository the upward search does not see). A bare repository as
+  -- the working directory counts as no repository (sessions are not kept there).
+  if (vim.env.GIT_DIR or "") == "" then
+    local direct, state = read_branch_from_head(vim.fn.getcwd())
+    if state ~= "unknown" then
+      return direct
+    end
   end
   local ok, git = pcall(require, "lib.nvim.git")
   if ok then
@@ -87,7 +109,7 @@ function M.current_branch()
   -- Fallback without spawning a process -- `lib.nvim.git` isn't installed,
   -- so this is the only way to answer at all. Runs on every session name
   -- resolution, which is the whole reason a process spawn had to go.
-  return read_branch_from_head(vim.fn.getcwd())
+  return (read_branch_from_head(vim.fn.getcwd()))
 end
 
 --- Same question as `M.current_branch()`, but NEVER through
@@ -106,7 +128,7 @@ end
 --- there is no other option.
 ---@return string|nil
 function M.current_branch_no_spawn()
-  return read_branch_from_head(vim.fn.getcwd())
+  return (read_branch_from_head(vim.fn.getcwd()))
 end
 
 ---@param markers string[]

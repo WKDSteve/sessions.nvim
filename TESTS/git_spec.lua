@@ -20,20 +20,55 @@ return function(H)
   end
 
   -- ---------------------------------------------- current_branch, via lib.nvim
-  -- lib.nvim is asked only when the direct .git/HEAD read names no branch (a detached HEAD, no repository): a
-  -- named branch is answered without spawning `git`, which cost ~150 ms per session save.
+  -- lib.nvim (a `git` process, ~150 ms per session save) is asked only for what the .git/HEAD read cannot know: the
+  -- reftable format (HEAD is the placeholder `ref: refs/heads/.invalid`), an unreadable HEAD and a GIT_DIR in the
+  -- environment. A branch, a detached HEAD and no repository at all are git's own answers already: no process.
+
+  local calls = 0
+  local restore = H.stub("lib.nvim.git", {
+    current_branch = function()
+      calls = calls + 1
+      return "dev"
+    end,
+  })
 
   local detached = dir .. "/detached"
   vim.fn.mkdir(detached .. "/.git", "p")
   vim.fn.writefile({ "9f6c4b1d0e2a3b5c7d8e9f0a1b2c3d4e5f607182" }, detached .. "/.git/HEAD")
   cd(detached)
+  H.falsy(git.current_branch(), "a detached HEAD has no branch, and git says the same")
+  vim.fn.writefile({ ("ab"):rep(32) }, detached .. "/.git/HEAD")
+  H.falsy(git.current_branch(), "nor does a detached HEAD of a SHA-256 repository")
+  H.eq(calls, 0, "a detached HEAD starts no git process")
 
-  local restore = H.stub("lib.nvim.git", {
-    current_branch = function()
-      return "dev"
-    end,
-  })
-  H.eq(git.current_branch(), "dev", "lib.nvim's answer is used when it is installed")
+  -- no .git anywhere above: a directory outside every checkout (the temp folder; skipped where it has one above)
+  local outside = vim.fn.tempname()
+  vim.fn.mkdir(outside .. "/sub", "p")
+  if #vim.fs.find(".git", { path = outside, upward = true, limit = 1 }) == 0 then
+    cd(outside .. "/sub")
+    H.falsy(git.current_branch(), "no repository: no branch")
+    H.eq(calls, 0, "no repository starts no git process")
+  end
+  cd(detached)
+
+  local old_git_dir = vim.env.GIT_DIR
+  vim.env.GIT_DIR = dir .. "/elsewhere"
+  H.eq(
+    git.current_branch(),
+    "dev",
+    "with GIT_DIR set git reads another repository: lib.nvim answers"
+  )
+  vim.env.GIT_DIR = old_git_dir
+  H.eq(calls, 1, "...through lib.nvim")
+
+  -- the reftable placeholder stays in HEAD for the cases below: they all go through lib.nvim
+  vim.fn.writefile({ "ref: refs/heads/.invalid" }, detached .. "/.git/HEAD")
+  H.eq(
+    git.current_branch(),
+    "dev",
+    "the reftable placeholder is git's to answer, not the branch '.invalid'"
+  )
+  H.eq(calls, 2, "...through lib.nvim too")
   restore()
 
   -- lib.nvim reports failure by *returning* a message rather than raising, so
